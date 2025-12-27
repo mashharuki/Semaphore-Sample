@@ -1,0 +1,89 @@
+name: Deploy Web App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web-app/**'
+      - 'package.json'
+      - 'yarn.lock'
+  workflow_dispatch:
+
+jobs:
+  deploy-preview:
+    name: Deploy to Vercel (Preview)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build web app
+        run: yarn workspace monorepo-ethers-web-app build
+        env:
+          NEXT_PUBLIC_DEFAULT_NETWORK: ${{ secrets.NEXT_PUBLIC_DEFAULT_NETWORK }}
+          NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS: ${{ secrets.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS }}
+          NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS: ${{ secrets.NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS }}
+          NEXT_PUBLIC_GROUP_ID: ${{ secrets.NEXT_PUBLIC_GROUP_ID }}
+
+      - name: Deploy to Vercel (Preview)
+        uses: amondnet/vercel-action@v25
+        if: github.event_name == 'pull_request'
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: apps/web-app
+
+  deploy-production:
+    name: Deploy to Vercel (Production)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build web app
+        run: yarn workspace monorepo-ethers-web-app build
+        env:
+          NEXT_PUBLIC_DEFAULT_NETWORK: ${{ secrets.NEXT_PUBLIC_DEFAULT_NETWORK }}
+          NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS: ${{ secrets.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS }}
+          NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS: ${{ secrets.NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS }}
+          NEXT_PUBLIC_GROUP_ID: ${{ secrets.NEXT_PUBLIC_GROUP_ID }}
+          NEXT_PUBLIC_INFURA_API_KEY: ${{ secrets.NEXT_PUBLIC_INFURA_API_KEY }}
+          NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK: ${{ secrets.NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK }}
+          NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT: ${{ secrets.NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT }}
+          NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID: ${{ secrets.NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID }}
+
+      - name: Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: apps/web-app
