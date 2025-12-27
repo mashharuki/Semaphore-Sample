@@ -7,6 +7,12 @@ on:
       - 'apps/web-app/**'
       - 'package.json'
       - 'yarn.lock'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web-app/**'
+      - 'package.json'
+      - 'yarn.lock'
   workflow_dispatch:
 
 jobs:
@@ -40,7 +46,6 @@ jobs:
 
       - name: Deploy to Vercel (Preview)
         uses: amondnet/vercel-action@v25
-        if: github.event_name == 'pull_request'
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
