@@ -6,15 +6,18 @@ import { HardhatUserConfig } from "hardhat/config"
 import { resolve } from "path"
 import "./tasks/deploy"
 
+// .env ファイルから環境変数を読み込みます
 dotenvConfig({ path: resolve(__dirname, "../../.env") })
 
 const config: HardhatUserConfig = {
     solidity: "0.8.23",
+    // デフォルトのネットワークを environment variable から取得、なければ 'hardhat' (ローカル) を使用
     defaultNetwork: process.env.DEFAULT_NETWORK || "hardhat",
     networks: {
         hardhat: {
-            chainId: 1337
+            chainId: 1337 // ローカル開発用のチェーンID
         },
+        // Semaphoreユーティリティを使用して、各種ネットワーク設定を自動生成
         ...getHardhatNetworks(process.env.ETHEREUM_PRIVATE_KEY)
     },
     gasReporter: {

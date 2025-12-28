@@ -6,15 +6,18 @@ import { useCallback, useEffect, useState } from "react"
 import Stepper from "../components/Stepper"
 import { useLogContext } from "../context/LogContext"
 
+// IdentitiesPage: ユーザーのSemaphoreアイデンティティを作成・表示するページ
 export default function IdentitiesPage() {
     const router = useRouter()
     const { setLog } = useLogContext()
     const [_identity, setIdentity] = useState<Identity>()
 
+    // コンポーネント読み込み時に、ローカルストレージに既存のアイデンティティがあるか確認
     useEffect(() => {
         const privateKey = localStorage.getItem("identity")
 
         if (privateKey) {
+            // 既存の秘密鍵があればインポートして復元
             const identity = Identity.import(privateKey)
 
             setIdentity(identity)
@@ -25,11 +28,14 @@ export default function IdentitiesPage() {
         }
     }, [setLog])
 
+    // createIdentity: 新しいSemaphoreアイデンティティを生成し、ローカルストレージに保存
     const createIdentity = useCallback(async () => {
+        // 全く新しい秘密鍵を持つアイデンティティを作成
         const identity = new Identity()
 
         setIdentity(identity)
 
+        // 秘密鍵をエクスポートしてブラウザに保存（これにより再訪問時も同じアイデンティティを使える）
         localStorage.setItem("identity", identity.export())
 
         setLog("Your new Semaphore identity has just been created 🎉")
@@ -40,7 +46,7 @@ export default function IdentitiesPage() {
             <h2>Identities</h2>
 
             <p>
-                The identity of a user in the Semaphore protocol. A{" "}
+                Semaphoreプロトコルにおけるユーザーのアイデンティティ。{" "}
                 <a
                     href="https://docs.semaphore.pse.dev/guides/identities"
                     target="_blank"
@@ -48,7 +54,7 @@ export default function IdentitiesPage() {
                 >
                     Semaphore identity
                 </a>{" "}
-                consists of an{" "}
+                は、{" "}
                 <a
                     href="https://github.com/privacy-scaling-explorations/zk-kit/tree/main/packages/eddsa-poseidon"
                     target="_blank"
@@ -56,7 +62,7 @@ export default function IdentitiesPage() {
                 >
                     EdDSA
                 </a>{" "}
-                public/private key pair and a commitment, used as the public identifier of the identity.
+                公開鍵・秘密鍵のペアと、公開識別子として使用される「コミットメント（Commitment）」で構成されます。
             </p>
 
             <div className="divider" />
@@ -68,6 +74,7 @@ export default function IdentitiesPage() {
             {_identity && (
                 <div className="key-wrapper">
                     <p>
+                        {/* 秘密鍵: 本来は誰にも見せてはいけませんが、デモのために表示しています */}
                         <b>Private Key (base64)</b>:<br /> {_identity.export()}
                     </p>
                     <p>
@@ -75,6 +82,7 @@ export default function IdentitiesPage() {
                         {_identity.publicKey[1].toString()}]
                     </p>
                     <p>
+                        {/* コミットメント: オンチェーン（スマートコントラクト）に登録される公開情報 */}
                         <b>Commitment</b>:<br /> {_identity.commitment.toString()}
                     </p>
                 </div>
@@ -88,6 +96,7 @@ export default function IdentitiesPage() {
 
             <div className="divider" />
 
+            {/* 次のステップ（グループ参加）への案内 */}
             <Stepper step={1} onNextClick={_identity && (() => router.push("/group"))} />
         </>
     )
