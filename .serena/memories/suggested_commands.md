@@ -14,8 +14,8 @@ The following commands can be run from the project root:
 
 ### apps/contracts
 
-- `yarn workspace @semaphore-protocol/cli-template-monorepo-ethers-contracts hardhat test`: Run smart contract tests.
-- `yarn workspace @semaphore-protocol/cli-template-monorepo-ethers-contracts hardhat compile`: Compile smart contracts.
+- `yarn workspace monorepo-ethers-contracts hardhat test`: Run smart contract tests.
+- `yarn workspace monorepo-ethers-contracts hardhat compile`: Compile smart contracts.
 
 ### apps/web-app
 

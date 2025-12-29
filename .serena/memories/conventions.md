@@ -3,8 +3,10 @@
 ## General
 
 - Use **TypeScript** for all new code.
-- Follow **Prettier** formatting rules.
+- Follow **Prettier** formatting rules (Tab width: 2).
 - Use **ESLint** for static analysis (and **Solhint** for Solidity).
+- Comments and documentation should be in **Japanese** as a primary preference.
+- All files must use **2-space indentation**.
 
 ## Smart Contracts
 
@@ -20,3 +22,5 @@
 - Context providers are located in `apps/web-app/src/context/`.
 - Utility functions are in `apps/web-app/src/utils/`.
 - Components are in `apps/web-app/src/components/`.
+- **Supabase** is used for Authentication and Database.
+- Semaphore Identities are stored securely in Supabase `identities` table.
