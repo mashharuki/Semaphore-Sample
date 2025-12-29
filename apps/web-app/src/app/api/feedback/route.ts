@@ -8,12 +8,12 @@ import Feedback from "../../../../contract-artifacts/Feedback.json"
  * @returns
  */
 export async function POST(req: NextRequest) {
-    if (typeof process.env.ETHEREUM_PRIVATE_KEY !== "string") {
-        throw new Error("Please, define ETHEREUM_PRIVATE_KEY in your .env file")
+    if (typeof process.env.PRIVATE_KEY !== "string") {
+        throw new Error("Please, define PRIVATE_KEY in your .env file")
     }
 
     // 必要な情報を環境変数から読み込む
-    const ethereumPrivateKey = process.env.ETHEREUM_PRIVATE_KEY
+    const ethereumPrivateKey = process.env.PRIVATE_KEY
     const ethereumNetwork = process.env.NEXT_PUBLIC_DEFAULT_NETWORK as string
     const infuraApiKey = process.env.NEXT_PUBLIC_INFURA_API_KEY as string
     const contractAddress = process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as string

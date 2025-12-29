@@ -17,7 +17,7 @@ export default function GroupsPage() {
     const { setLog } = useLogContext()
     const { _users, refreshUsers, addUser } = useSemaphoreContext()
     const [_loading, setLoading] = useState(false)
-    const { _identity } = useSemaphoreIdentity()
+    const { _identity, loading: identityLoading } = useSemaphoreIdentity()
 
     useEffect(() => {
         if (_users.length > 0) {
@@ -105,6 +105,10 @@ export default function GroupsPage() {
         () => _identity !== undefined && _users.includes(_identity.commitment.toString()),
         [_identity, _users]
     )
+
+    if (identityLoading) {
+        return <div className="loader"></div>
+    }
 
     return (
         <>

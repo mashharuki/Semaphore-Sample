@@ -18,7 +18,7 @@ export default function ProofsPage() {
     const { setLog } = useLogContext()
     const { _users, _feedback, refreshFeedback, addFeedback } = useSemaphoreContext()
     const [_loading, setLoading] = useState(false)
-    const { _identity } = useSemaphoreIdentity()
+    const { _identity, loading: identityLoading } = useSemaphoreIdentity()
 
     useEffect(() => {
         if (_feedback.length > 0) {
@@ -128,6 +128,10 @@ export default function ProofsPage() {
             }
         }
     }, [_identity, _users, addFeedback, setLoading, setLog])
+
+    if (identityLoading) {
+        return <div className="loader"></div>
+    }
 
     return (
         <>

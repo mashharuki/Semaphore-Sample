@@ -1,13 +1,13 @@
 import "@nomicfoundation/hardhat-toolbox"
 import "@semaphore-protocol/hardhat"
-import { getHardhatNetworks } from "@semaphore-protocol/utils"
 import { config as dotenvConfig } from "dotenv"
 import { HardhatUserConfig } from "hardhat/config"
 import { resolve } from "path"
 import "./tasks/deploy"
 
 // .env ファイルから環境変数を読み込みます
-dotenvConfig({ path: resolve(__dirname, "../../.env") })
+const envPath = resolve(__dirname, "../../.env")
+dotenvConfig({ path: envPath })
 
 /**
  * Hardhatの設定ファイル
@@ -20,8 +20,10 @@ const config: HardhatUserConfig = {
         hardhat: {
             chainId: 1337 // ローカル開発用のチェーンID
         },
-        // Semaphoreユーティリティを使用して、各種ネットワーク設定を自動生成
-        ...getHardhatNetworks(process.env.ETHEREUM_PRIVATE_KEY)
+        sepolia: {
+            url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
+            accounts: [process.env.PRIVATE_KEY!]
+        }
     },
     gasReporter: {
         currency: "USD",

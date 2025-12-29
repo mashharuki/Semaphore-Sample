@@ -1,4 +1,5 @@
 import PageContainer from "@/components/PageContainer"
+import { AuthProvider } from "@/context/AuthContext"
 import { LogContextProvider } from "@/context/LogContext"
 import { SemaphoreContextProvider } from "@/context/SemaphoreContext"
 import type { Metadata } from "next"
@@ -46,11 +47,13 @@ export default function RootLayout({
                 ></link>
             </head>
             <body suppressHydrationWarning className={inter.className}>
-                <SemaphoreContextProvider>
-                    <LogContextProvider>
-                        <PageContainer>{children}</PageContainer>
-                    </LogContextProvider>
-                </SemaphoreContextProvider>
+                <AuthProvider>
+                    <SemaphoreContextProvider>
+                        <LogContextProvider>
+                            <PageContainer>{children}</PageContainer>
+                        </LogContextProvider>
+                    </SemaphoreContextProvider>
+                </AuthProvider>
             </body>
         </html>
     )

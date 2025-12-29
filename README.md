@@ -141,16 +141,16 @@ cp .env.example .env
 
 ### 必須の環境変数
 
-| 変数名 | 説明 |
-| :--- | :--- |
-| `DEFAULT_NETWORK` | 使用するネットワーク（例: `sepolia`, `hardhat`）。 |
-| `ETHEREUM_PRIVATE_KEY` | デプロイやトランザクション送信に使用するアカウントの秘密鍵。 |
-| `INFURA_API_KEY` | Infura 経由でブロックチェーンに接続するための API キー。 |
-| `NEXT_PUBLIC_DEFAULT_NETWORK` | フロントエンドが接続するネットワーク（通常は `DEFAULT_NETWORK` と同じ）。 |
-| `NEXT_PUBLIC_INFURA_API_KEY` | フロントエンドで使用する Infura API キー。 |
-| `NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS` | 使用するネットワークでデプロイ済みの Semaphore コントラクトアドレス。 |
-| `NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS` | デプロイした `Feedback.sol` のコントラクトアドレス。 |
-| `NEXT_PUBLIC_GROUP_ID` | Semaphore グループの ID。 |
+| 変数名                                   | 説明                                                                      |
+| :--------------------------------------- | :------------------------------------------------------------------------ |
+| `DEFAULT_NETWORK`                        | 使用するネットワーク（例: `sepolia`, `hardhat`）。                        |
+| `ETHEREUM_PRIVATE_KEY`                   | デプロイやトランザクション送信に使用するアカウントの秘密鍵。              |
+| `INFURA_API_KEY`                         | Infura 経由でブロックチェーンに接続するための API キー。                  |
+| `NEXT_PUBLIC_DEFAULT_NETWORK`            | フロントエンドが接続するネットワーク（通常は `DEFAULT_NETWORK` と同じ）。 |
+| `NEXT_PUBLIC_INFURA_API_KEY`             | フロントエンドで使用する Infura API キー。                                |
+| `NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS` | 使用するネットワークでデプロイ済みの Semaphore コントラクトアドレス。     |
+| `NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS`  | デプロイした `Feedback.sol` のコントラクトアドレス。                      |
+| `NEXT_PUBLIC_GROUP_ID`                   | Semaphore グループの ID。                                                 |
 
 ### 任意の設定（リレイヤー/ガスレス送信）
 
@@ -178,6 +178,22 @@ yarn dev
 
 ```bash
 yarn deploy --semaphore <semaphore-address> --network sepolia
+```
+
+ネットワークごとのアドレスは以下のページから確認が可能
+
+[Deployed contracts](https://docs.semaphore.pse.dev/deployed-contracts)
+
+sepoliaの場合は以下のように実行する
+
+```bash
+yarn deploy --semaphore 0x8A1fd199516489B0Fb7153EB5f075cDAC83c693D --network sepolia
+```
+
+Verifyのためには以下のコマンドを実施する
+
+```bash
+yarn verify 0xA3aabaB53464eeD2BFEc0c77d5D8b110887cFA7F 0x8A1fd199516489B0Fb7153EB5f075cDAC83c693D --network sepolia
 ```
 
 2. `apps/web-app/.env.production` ファイルを、新しいコントラクトアドレスとグループIDで更新します。
