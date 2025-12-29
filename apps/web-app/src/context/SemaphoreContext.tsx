@@ -20,17 +20,26 @@ interface ProviderProps {
     children: ReactNode
 }
 
-// 接続先のイーサリアムネットワーク。ローカル開発時は localhost、それ以外は環境変数の値を使用。
+/**
+ * 接続先のイーサリアムネットワーク。ローカル開発時は localhost、それ以外は環境変数の値を使用。
+ */
 const ethereumNetwork =
     process.env.NEXT_PUBLIC_DEFAULT_NETWORK === "localhost"
         ? "http://127.0.0.1:8545"
         : process.env.NEXT_PUBLIC_DEFAULT_NETWORK
 
+/**
+ * SemaphoreContextProvider: コンテキストプロバイダー
+ * @param children
+ * @returns
+ */
 export const SemaphoreContextProvider: React.FC<ProviderProps> = ({ children }) => {
     const [_users, setUsers] = useState<any[]>([])
     const [_feedback, setFeedback] = useState<string[]>([])
 
-    // refreshUsers: Semaphoreグループのメンバー一覧をコントラクトから取得します。
+    /**
+     * refreshUsers: Semaphoreグループのメンバー一覧をコントラクトから取得します。
+     */
     const refreshUsers = useCallback(async (): Promise<void> => {
         const semaphore = new SemaphoreEthers(ethereumNetwork, {
             address: process.env.NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS,
@@ -43,6 +52,10 @@ export const SemaphoreContextProvider: React.FC<ProviderProps> = ({ children }) 
         setUsers(members.map((member) => member.toString()))
     }, [])
 
+    /**
+     * addUser: ローカルの状態にユーザーを一時的に追加する関数
+     * @param user
+     */
     const addUser = useCallback(
         (user: any) => {
             setUsers([..._users, user])
@@ -50,7 +63,9 @@ export const SemaphoreContextProvider: React.FC<ProviderProps> = ({ children }) 
         [_users]
     )
 
-    // refreshFeedback: 検証済みの証明（フィードバック）の一覧をコントラクトから取得します。
+    /**
+     * refreshFeedback: 検証済みの証明（フィードバック）の一覧をコントラクトから取得します。
+     */
     const refreshFeedback = useCallback(async (): Promise<void> => {
         const semaphore = new SemaphoreEthers(ethereumNetwork, {
             address: process.env.NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS,
@@ -71,7 +86,9 @@ export const SemaphoreContextProvider: React.FC<ProviderProps> = ({ children }) 
         [_feedback]
     )
 
-    // コンポーネントのマウント時にデータを初回取得します。
+    /**
+     * コンポーネントのマウント時にデータを初回取得します。
+     */
     useEffect(() => {
         refreshUsers()
         refreshFeedback()
@@ -93,7 +110,9 @@ export const SemaphoreContextProvider: React.FC<ProviderProps> = ({ children }) 
     )
 }
 
-// useSemaphoreContext: どこからでもコンテキストのデータにアクセスできるようにするカスタムフック
+/**
+ * useSemaphoreContext: どこからでもコンテキストのデータにアクセスできるようにするカスタムフック
+ */
 export const useSemaphoreContext = () => {
     const context = useContext(SemaphoreContext)
     if (context === null) {

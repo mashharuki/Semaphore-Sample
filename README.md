@@ -25,6 +25,7 @@ graph TD
 ## 🔄 処理シーケンス
 
 ### 1. アイデンティティの生成
+
 ```mermaid
 sequenceDiagram
     actor User
@@ -38,6 +39,7 @@ sequenceDiagram
 ```
 
 ### 2. グループへの参加
+
 ```mermaid
 sequenceDiagram
     actor User
@@ -53,6 +55,7 @@ sequenceDiagram
 ```
 
 ### 3. 匿名フィードバックの送信
+
 ```mermaid
 sequenceDiagram
     actor User
@@ -109,22 +112,55 @@ Semaphoreプロトコルは内部で [Circom](https://iden3.io/circom) で記述
 ## 🛠 機能と技術スタック
 
 ### 提供している機能の一覧
-| 機能カテゴリ | 説明 |
-| --- | --- |
+
+| 機能カテゴリ             | 説明                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------- |
 | **アイデンティティ管理** | Semaphoreアイデンティティ（秘密鍵・公開鍵・コミットメント）の生成、ブラウザ保存、復元。 |
-| **グループ管理** | コントラクト上でのSemaphoreグループの作成およびメンバー（コミットメント）の追加。 |
-| **匿名証明と検証** | ゼロ知識証明（ZK-Proof）のオフチェーン生成と、オンチェーンでの正当性検証。 |
-| **ステート管理** | React Contextを使用したメンバーリストおよび検証済みフィードバックの共有。 |
+| **グループ管理**         | コントラクト上でのSemaphoreグループの作成およびメンバー（コミットメント）の追加。       |
+| **匿名証明と検証**       | ゼロ知識証明（ZK-Proof）のオフチェーン生成と、オンチェーンでの正当性検証。              |
+| **ステート管理**         | React Contextを使用したメンバーリストおよび検証済みフィードバックの共有。               |
 
 ### 技術スタック
-| カテゴリ | 使用技術 |
-| --- | --- |
-| **モノレポ管理** | Yarn Berry (v4) |
-| **スマートコントラクト** | Solidity, Hardhat |
-| **フロントエンド** | Next.js (App Router), React, CSS Modules |
-| **ゼロ知識証明** | Semaphore Protocol (@semaphore-protocol/core) |
-| **クライアント通信** | SemaphoreEthers, Ethers.js (v6) |
-| **静的解析・整形** | ESLint, Prettier, Solhint |
+
+| カテゴリ                 | 使用技術                                      |
+| ------------------------ | --------------------------------------------- |
+| **モノレポ管理**         | Yarn Berry (v4)                               |
+| **スマートコントラクト** | Solidity, Hardhat                             |
+| **フロントエンド**       | Next.js (App Router), React, CSS Modules      |
+| **ゼロ知識証明**         | Semaphore Protocol (@semaphore-protocol/core) |
+| **クライアント通信**     | SemaphoreEthers, Ethers.js (v6)               |
+| **静的解析・整形**       | ESLint, Prettier, Solhint                     |
+
+## ⚙️ 環境変数のセットアップ
+
+Sepolia などのテストネットワークで動作確認を行う場合、環境変数の設定が必要です。プロジェクトのルートディレクトリにある `.env.example` を `.env` にコピーして、必要な値を入力してください。
+
+```bash
+cp .env.example .env
+```
+
+### 必須の環境変数
+
+| 変数名 | 説明 |
+| :--- | :--- |
+| `DEFAULT_NETWORK` | 使用するネットワーク（例: `sepolia`, `hardhat`）。 |
+| `ETHEREUM_PRIVATE_KEY` | デプロイやトランザクション送信に使用するアカウントの秘密鍵。 |
+| `INFURA_API_KEY` | Infura 経由でブロックチェーンに接続するための API キー。 |
+| `NEXT_PUBLIC_DEFAULT_NETWORK` | フロントエンドが接続するネットワーク（通常は `DEFAULT_NETWORK` と同じ）。 |
+| `NEXT_PUBLIC_INFURA_API_KEY` | フロントエンドで使用する Infura API キー。 |
+| `NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS` | 使用するネットワークでデプロイ済みの Semaphore コントラクトアドレス。 |
+| `NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS` | デプロイした `Feedback.sol` のコントラクトアドレス。 |
+| `NEXT_PUBLIC_GROUP_ID` | Semaphore グループの ID。 |
+
+### 任意の設定（リレイヤー/ガスレス送信）
+
+ガスレス機能を試す場合は、以下の変数も設定してください。
+
+- `GELATO_RELAYER_API_KEY`
+- `NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT`
+- `NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID`
+
+---
 
 ## 📜 使い方
 

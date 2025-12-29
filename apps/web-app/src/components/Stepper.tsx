@@ -6,6 +6,11 @@ export type StepperProps = {
     onNextClick?: () => void
 }
 
+/**
+ * Stepper: ステッパーコンポーネント
+ * @param param0
+ * @returns
+ */
 export default function Stepper({ step, onPrevClick, onNextClick }: StepperProps) {
     return (
         <div className="stepper">

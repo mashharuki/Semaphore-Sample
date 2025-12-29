@@ -7,7 +7,14 @@ import { run } from "hardhat"
 // eslint-disable-next-line
 import { Feedback, ISemaphore } from "../typechain-types"
 
+/**
+ * Feedbackコントラクトのユニットテストコード
+ */
 describe("Feedback", () => {
+    /**
+     * Feedbackコントラクトをデプロイするfixtureメソッド
+     * @returns
+     */
     async function deployFeedbackFixture() {
         const { semaphore } = await run("deploy:semaphore", {
             logs: false
@@ -34,6 +41,7 @@ describe("Feedback", () => {
             const group = new Group()
 
             for (const [i, user] of users.entries()) {
+                // グループにjoinできるかどうかのテストを実施する
                 const transaction = await feedbackContract.joinGroup(user.commitment)
                 group.addMember(user.commitment)
 

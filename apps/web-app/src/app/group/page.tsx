@@ -2,13 +2,16 @@
 import Stepper from "@/components/Stepper"
 import { useLogContext } from "@/context/LogContext"
 import { useSemaphoreContext } from "@/context/SemaphoreContext"
-import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo } from "react"
-import Feedback from "../../../contract-artifacts/Feedback.json"
-import { ethers } from "ethers"
 import useSemaphoreIdentity from "@/hooks/useSemaphoreIdentity"
-import { useState } from "react"
+import { ethers } from "ethers"
+import { useRouter } from "next/navigation"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import Feedback from "../../../contract-artifacts/Feedback.json"
 
+/**
+ * GroupsPageコンポーネント
+ * @returns
+ */
 export default function GroupsPage() {
     const router = useRouter()
     const { setLog } = useLogContext()
@@ -24,6 +27,9 @@ export default function GroupsPage() {
 
     const users = useMemo(() => [..._users].reverse(), [_users])
 
+    /**
+     * グループに参加する
+     */
     const joinGroup = useCallback(async () => {
         if (!_identity) {
             return

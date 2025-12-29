@@ -3,13 +3,16 @@
 import Stepper from "@/components/Stepper"
 import { useLogContext } from "@/context/LogContext"
 import { useSemaphoreContext } from "@/context/SemaphoreContext"
+import useSemaphoreIdentity from "@/hooks/useSemaphoreIdentity"
 import { generateProof, Group } from "@semaphore-protocol/core"
 import { encodeBytes32String, ethers } from "ethers"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Feedback from "../../../contract-artifacts/Feedback.json"
-import useSemaphoreIdentity from "@/hooks/useSemaphoreIdentity"
 
+/**
+ * ProofPageコンポーネント
+ */
 export default function ProofsPage() {
     const router = useRouter()
     const { setLog } = useLogContext()
@@ -38,19 +41,22 @@ export default function ProofsPage() {
             setLog(`Posting your anonymous feedback...`)
 
             try {
+                // Groupインスタンスを作成
                 const group = new Group(_users)
-
+                // メッセージをエンコーディングする
                 const message = encodeBytes32String(feedback)
-
+                // ZK Proofを生成する
                 const { points, merkleTreeDepth, merkleTreeRoot, nullifier } = await generateProof(
                     _identity,
                     group,
                     message,
                     process.env.NEXT_PUBLIC_GROUP_ID as string
                 )
-
+                // フィードバックを送信する
                 let feedbackSent: boolean = false
                 const params = [merkleTreeDepth, merkleTreeRoot, nullifier, message, points]
+
+                // OpenZeppelin Autotaskを使用する場合は以下を使用する
                 if (process.env.NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK) {
                     const response = await fetch(process.env.NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK, {
                         method: "POST",
@@ -88,6 +94,7 @@ export default function ProofsPage() {
                         feedbackSent = true
                     }
                 } else {
+                    // feedbackを送信するAPIを実行
                     const response = await fetch("api/feedback", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },

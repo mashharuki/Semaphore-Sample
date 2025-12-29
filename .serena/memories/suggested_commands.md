@@ -13,8 +13,10 @@ The following commands can be run from the project root:
 ## Package-Specific Commands
 
 ### apps/contracts
+
 - `yarn workspace @semaphore-protocol/cli-template-monorepo-ethers-contracts hardhat test`: Run smart contract tests.
 - `yarn workspace @semaphore-protocol/cli-template-monorepo-ethers-contracts hardhat compile`: Compile smart contracts.
 
 ### apps/web-app
+
 - `yarn workspace monorepo-ethers-web-app dev`: Run frontend dev server.

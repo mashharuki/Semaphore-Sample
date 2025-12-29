@@ -3,7 +3,8 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 /**
- * useSemaphoreIdentity: ブラウザのローカルストレージからSemaphoreアイデンティティを読み込むカスタムフック。
+ * useSemaphoreIdentity:
+ * ブラウザのローカルストレージからSemaphoreアイデンティティを読み込むカスタムフック。
  * アイデンティティが存在しない場合はトップページにリダイレクトします。
  */
 export default function useSemaphoreIdentity() {

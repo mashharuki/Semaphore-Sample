@@ -9,6 +9,9 @@ import "./tasks/deploy"
 // .env ファイルから環境変数を読み込みます
 dotenvConfig({ path: resolve(__dirname, "../../.env") })
 
+/**
+ * Hardhatの設定ファイル
+ */
 const config: HardhatUserConfig = {
     solidity: "0.8.23",
     // デフォルトのネットワークを environment variable から取得、なければ 'hardhat' (ローカル) を使用

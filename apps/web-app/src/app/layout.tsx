@@ -1,12 +1,15 @@
 import PageContainer from "@/components/PageContainer"
-import type { Metadata } from "next"
 import { LogContextProvider } from "@/context/LogContext"
 import { SemaphoreContextProvider } from "@/context/SemaphoreContext"
+import type { Metadata } from "next"
 import "./globals.css"
 
 import { Inter } from "next/font/google"
 const inter = Inter({ subsets: ["latin"] })
 
+/**
+ * metadata: ページのメタデータ
+ */
 export const metadata: Metadata = {
     title: "Semaphore Demo",
     description: "A zero-knowledge protocol for anonymous signaling on Ethereum.",

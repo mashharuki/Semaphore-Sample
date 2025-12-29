@@ -6,7 +6,10 @@ import { useCallback, useEffect, useState } from "react"
 import Stepper from "../components/Stepper"
 import { useLogContext } from "../context/LogContext"
 
-// IdentitiesPage: ユーザーのSemaphoreアイデンティティを作成・表示するページ
+/**
+ * IdentitiesPage: ユーザーのSemaphoreアイデンティティを作成・表示するページ
+ * @returns
+ */
 export default function IdentitiesPage() {
     const router = useRouter()
     const { setLog } = useLogContext()
@@ -14,6 +17,7 @@ export default function IdentitiesPage() {
 
     // コンポーネント読み込み時に、ローカルストレージに既存のアイデンティティがあるか確認
     useEffect(() => {
+        // 秘密鍵を取得
         const privateKey = localStorage.getItem("identity")
 
         if (privateKey) {

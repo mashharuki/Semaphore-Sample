@@ -2,9 +2,14 @@
 
 import { useLogContext } from "@/context/LogContext"
 import shortenString from "@/utils/shortenString"
-import { usePathname } from "next/navigation"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
+/**
+ * PageContainer: ページのコンテナーコンポーネント
+ * @param param0
+ * @returns
+ */
 export default function PageContainer({
     children
 }: Readonly<{
@@ -13,6 +18,12 @@ export default function PageContainer({
     const pathname = usePathname()
     const { log } = useLogContext()
 
+    /**
+     * getExplorerLink: BlockExplorerへのリンクを生成する関数
+     * @param network
+     * @param address
+     * @returns
+     */
     function getExplorerLink(network: string, address: string) {
         switch (network) {
             case "sepolia":

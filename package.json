@@ -12,6 +12,8 @@
         "README.md"
     ],
     "scripts": {
+        "web-app": "yarn workspace monorepo-ethers-web-app",
+        "contracts": "yarn workspace monorepo-ethers-contracts",
         "dev": "yarn workspaces foreach -A -pi run dev",
         "dev:web-app": "yarn workspace monorepo-ethers-web-app dev",
         "dev:contracts": "yarn workspace monorepo-ethers-contracts dev",

@@ -11,6 +11,9 @@ contract Feedback {
     // このコントラクトで使用するSemaphoreグループのID
     uint256 public groupId;
 
+    /**
+     * コンストラクター
+     */
     constructor(address semaphoreAddress) {
         semaphore = ISemaphore(semaphoreAddress);
 

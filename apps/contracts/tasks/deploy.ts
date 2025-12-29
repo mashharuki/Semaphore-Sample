@@ -1,5 +1,8 @@
 import { task, types } from "hardhat/config"
 
+/**
+ * Feedbackコントラクトをデプロイするタスク
+ */
 task("deploy", "Deploy a Feedback contract")
     .addOptionalParam("semaphore", "Semaphore contract address", undefined, types.string)
     .addOptionalParam("logs", "Print the logs", true, types.boolean)
@@ -13,7 +16,7 @@ task("deploy", "Deploy a Feedback contract")
         }
 
         const FeedbackFactory = await ethers.getContractFactory("Feedback")
-
+        // Feedbackコントラクトをデプロイする
         const feedbackContract = await FeedbackFactory.deploy(semaphoreAddress)
 
         if (logs) {
