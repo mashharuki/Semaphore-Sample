@@ -77,6 +77,7 @@ export default function GroupsPage() {
         joinedGroup = true
       }
     } else {
+      // API経由でグループに参加する
       const response = await fetch("api/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
