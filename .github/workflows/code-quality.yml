@@ -1,107 +1,107 @@
 name: Code Quality & Security
 
 on:
-    push:
-        branches: [main, develop]
-    pull_request:
-        branches: [main, develop]
-    schedule:
-        # Run weekly on Monday at 00:00 UTC
-        - cron: "0 0 * * 1"
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: "0 0 * * 1"
 
 jobs:
-    dependency-review:
-        name: Dependency Review
-        runs-on: ubuntu-latest
-        if: github.event_name == 'pull_request'
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Dependency Review
-              uses: actions/dependency-review-action@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
 
-    codeql-analysis:
-        name: CodeQL Analysis
-        runs-on: ubuntu-latest
-        permissions:
-            actions: read
-            contents: read
-            security-events: write
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
 
-        strategy:
-            fail-fast: false
-            matrix:
-                language: ["javascript", "typescript"]
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["javascript", "typescript"]
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Initialize CodeQL
-              uses: github/codeql-action/init@v3
-              with:
-                  languages: ${{ matrix.language }}
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
 
-            - name: Autobuild
-              uses: github/codeql-action/autobuild@v3
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
-            - name: Perform CodeQL Analysis
-              uses: github/codeql-action/analyze@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
 
-    contract-security:
-        name: Smart Contract Security (Slither)
-        runs-on: ubuntu-latest
+  contract-security:
+    name: Smart Contract Security (Slither)
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Setup Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.11"
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-            - name: Enable Corepack
-              run: corepack enable
+      - name: Enable Corepack
+        run: corepack enable
 
-            - name: Install dependencies
-              run: yarn install --immutable
+      - name: Install dependencies
+        run: yarn install --immutable
 
-            - name: Install Slither
-              run: pip3 install slither-analyzer
+      - name: Install Slither
+        run: pip3 install slither-analyzer
 
-            - name: Compile contracts
-              run: yarn workspace monorepo-ethers-contracts compile
+      - name: Compile contracts
+        run: yarn workspace monorepo-ethers-contracts compile
 
-            - name: Run Slither analysis
-              run: |
-                  cd apps/contracts
-                  slither . --filter-paths "node_modules|test" --exclude-informational || true
-              continue-on-error: true
+      - name: Run Slither analysis
+        run: |
+          cd apps/contracts
+          slither . --filter-paths "node_modules|test" --exclude-informational || true
+        continue-on-error: true
 
-    audit-dependencies:
-        name: Audit Dependencies
-        runs-on: ubuntu-latest
+  audit-dependencies:
+    name: Audit Dependencies
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-            - name: Enable Corepack
-              run: corepack enable
+      - name: Enable Corepack
+        run: corepack enable
 
-            - name: Run yarn audit
-              run: yarn npm audit --all --recursive
-              continue-on-error: true
+      - name: Run yarn audit
+        run: yarn npm audit --all --recursive
+        continue-on-error: true

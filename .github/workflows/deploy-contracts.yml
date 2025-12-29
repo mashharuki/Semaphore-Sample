@@ -1,65 +1,65 @@
 name: Deploy Contracts
 
 on:
-    workflow_dispatch:
-        inputs:
-            network:
-                description: "Network to deploy to"
-                required: true
-                type: choice
-                options:
-                    - sepolia
-                    - mainnet
-                    - localhost
-            semaphore_address:
-                description: "Semaphore contract address"
-                required: true
-                type: string
+  workflow_dispatch:
+    inputs:
+      network:
+        description: "Network to deploy to"
+        required: true
+        type: choice
+        options:
+          - sepolia
+          - mainnet
+          - localhost
+      semaphore_address:
+        description: "Semaphore contract address"
+        required: true
+        type: string
 
 jobs:
-    deploy:
-        name: Deploy to ${{ inputs.network }}
-        runs-on: ubuntu-latest
-        environment: ${{ inputs.network }}
+  deploy:
+    name: Deploy to ${{ inputs.network }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.network }}
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-            - name: Enable Corepack
-              run: corepack enable
+      - name: Enable Corepack
+        run: corepack enable
 
-            - name: Get yarn cache directory path
-              id: yarn-cache-dir-path
-              run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
-            - name: Cache yarn dependencies
-              uses: actions/cache@v4
-              with:
-                  path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-                  key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-yarn-
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
 
-            - name: Install dependencies
-              run: yarn install --immutable
+      - name: Install dependencies
+        run: yarn install --immutable
 
-            - name: Deploy contracts
-              run: yarn workspace monorepo-ethers-contracts deploy --semaphore ${{ inputs.semaphore_address }} --network ${{ inputs.network }}
-              env:
-                  ETHEREUM_PRIVATE_KEY: ${{ secrets.ETHEREUM_PRIVATE_KEY }}
-                  ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+      - name: Deploy contracts
+        run: yarn workspace monorepo-ethers-contracts deploy --semaphore ${{ inputs.semaphore_address }} --network ${{ inputs.network }}
+        env:
+          ETHEREUM_PRIVATE_KEY: ${{ secrets.ETHEREUM_PRIVATE_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
 
-            - name: Upload deployment artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: deployment-artifacts-${{ inputs.network }}
-                  path: |
-                      apps/contracts/artifacts/
-                      apps/contracts/deployments/
-                  retention-days: 30
+      - name: Upload deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-artifacts-${{ inputs.network }}
+          path: |
+            apps/contracts/artifacts/
+            apps/contracts/deployments/
+          retention-days: 30
