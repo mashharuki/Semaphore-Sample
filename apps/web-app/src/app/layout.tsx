@@ -31,6 +31,11 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", images: "https://demo.semaphore.pse.dev/social-media.png" }
 }
 
+/**
+ * ルートレイアウトコンポーネント
+ * @param param0 
+ * @returns 
+ */
 export default function RootLayout({
   children
 }: Readonly<{

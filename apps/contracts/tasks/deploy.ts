@@ -11,10 +11,11 @@ task("deploy", "Deploy a Feedback contract")
       const { semaphore } = await run("deploy:semaphore", {
         logs
       })
-
+      // デプロイ済みのsemaphoreコントラクトのアドレスを取得する
       semaphoreAddress = await semaphore.getAddress()
     }
 
+    // Feedbackコントラクトのファクトリーインスタンスを作成する
     const FeedbackFactory = await ethers.getContractFactory("Feedback")
     // Feedbackコントラクトをデプロイする
     const feedbackContract = await FeedbackFactory.deploy(semaphoreAddress)

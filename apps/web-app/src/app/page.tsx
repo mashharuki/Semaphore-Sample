@@ -53,7 +53,9 @@ export default function IdentitiesPage() {
     fetchCurrentIdentity()
   }, [user, authLoading, setLog])
 
-  // createIdentity: 新しいSemaphoreアイデンティティを生成し、Supabaseに保存
+  /**
+   * createIdentity: 新しいSemaphoreアイデンティティを生成し、Supabaseに保存
+   */
   const createIdentity = useCallback(async () => {
     if (!user) return
 
