@@ -184,7 +184,7 @@ yarn deploy --semaphore <semaphore-address> --network sepolia
 
 [Deployed contracts](https://docs.semaphore.pse.dev/deployed-contracts)
 
-sepoliaの場合は以下のように実行する
+#### Sepoliaの場合
 
 ```bash
 yarn deploy --semaphore 0x8A1fd199516489B0Fb7153EB5f075cDAC83c693D --network sepolia
@@ -194,6 +194,18 @@ Verifyのためには以下のコマンドを実施する
 
 ```bash
 yarn verify 0xA3aabaB53464eeD2BFEc0c77d5D8b110887cFA7F 0x8A1fd199516489B0Fb7153EB5f075cDAC83c693D --network sepolia
+```
+
+#### Base Sepoliaの場合
+
+```bash
+yarn deploy --semaphore 0x8A1fd199516489B0Fb7153EB5f075cDAC83c693D --network baseSepolia
+```
+
+Verifyのためには以下のコマンドを実施する
+
+```bash
+yarn verify 0xeA114004087c6b32BeeaAAc1f68f5C5bdc77b350 0x8A1fd199516489B0Fb7153EB5f075cDAC83c693D --network baseSepolia
 ```
 
 2. `apps/web-app/.env.production` ファイルを、新しいコントラクトアドレスとグループIDで更新します。
