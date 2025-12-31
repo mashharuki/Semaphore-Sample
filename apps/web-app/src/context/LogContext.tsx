@@ -15,8 +15,8 @@ interface ProviderProps {
 
 /**
  * LogContextProvider
- * @param param0 
- * @returns 
+ * @param param0
+ * @returns
  */
 export const LogContextProvider: React.FC<ProviderProps> = ({ children }) => {
   const [log, setLog] = useState<string>("")

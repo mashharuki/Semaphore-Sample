@@ -30,8 +30,8 @@ task("deploy", "Deploy a Feedback contract")
       group: "contracts",
       name: "Feedback",
       value: feedbackContract.target as any,
-      network: network.name,
-    }); 
+      network: network.name
+    })
 
     return feedbackContract
   })

@@ -33,8 +33,8 @@ export const metadata: Metadata = {
 
 /**
  * ルートレイアウトコンポーネント
- * @param param0 
- * @returns 
+ * @param param0
+ * @returns
  */
 export default function RootLayout({
   children
