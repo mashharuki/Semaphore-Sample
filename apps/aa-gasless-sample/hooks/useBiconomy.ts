@@ -67,17 +67,15 @@ export const useBiconomy = () => {
       }
 
       const provider = await embeddedWallet.getEthereumProvider()
-      // Create a signer Object for the embedded wallet
-      const walletClient = createWalletClient({
-        account: embeddedWallet.address as `0x${string}`,
-        chain: baseSepolia,
-        transport: custom(provider)
-      })
+      
+      console.log("Embedded Wallet address:", embeddedWallet.address)
 
       // Create Smart Account Client
+      // Note: accountAddress should NOT be set for standard Nexus Accounts
+      // It's only used for EIP-7702 flows
       const nexusClient = createSmartAccountClient({
         account: await toNexusAccount({
-          signer: walletClient,
+          signer: provider as any,
           chainConfiguration: {
             chain: baseSepolia,
             transport: http(),
