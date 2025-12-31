@@ -39,19 +39,87 @@ Next.jsフロントエンドアプリケーション。Semaphoreプロトコル�
 - Supabase統合による認証とデータ永続化
 
 ### apps/aa-gasless-sample
-Biconomy + Privyを使用したAccount Abstraction（AA）とガスレストランザクションのサンプル実装。
+**Biconomy + Privy統合によるAccount Abstraction（AA）とガスレストランザクションのサンプル実装**
 
-**主要機能**:
-- Privy統合による認証（ウォレット接続）
-- Biconomy Smart Accountによるアカウントアブストラクション
-- ガスレストランザクション実装例
-- Next.js 14 + App Router + shadcn/ui
+#### 主要機能
+- **Privy統合認証**: Embedded Walletによるウォレット接続
+- **Biconomy Smart Account**: Account Abstraction実装（ERC-4337準拠）
+- **ガスレストランザクション**: Paymaster APIによるガススポンサーシップ
+- **ZK-Proof NFTミント**: ゼロ知識証明を使用したNFTミント機能
 
-**使用技術**:
-- @privy-io/react-auth: 認証プロバイダー
-- @biconomy/account, @biconomy/abstractjs: AA実装
-- ethers v6, viem: ブロックチェーン通信
-- snarkjs, circomlibjs: ゼロ知識証明サポート
+#### アーキテクチャ
+```
+Privy Embedded Wallet (EOA)
+    ↓ EIP-1193 Provider
+Biconomy Nexus Account (Smart Account)
+    ↓ User Operation
+Bundler → EntryPoint → Target Contract
+    ↑ Gas Sponsorship
+Paymaster
+```
+
+#### 使用技術スタック
+- **認証**: @privy-io/react-auth v3.10.0
+- **AA実装**: 
+  - @biconomy/abstractjs v1.1.20
+  - @biconomy/account v4.6.3
+- **Blockchain通信**: 
+  - ethers v6.9.0
+  - viem v2.31.0
+- **ZK-Proof**: 
+  - snarkjs v0.6.9
+  - circomlibjs v0.1.7
+- **UI**: Next.js 14 + shadcn/ui + Tailwind CSS
+
+#### 重要な実装詳細
+
+**Biconomy Nexus Account初期化**:
+```typescript
+const provider = await embeddedWallet.getEthereumProvider()
+
+const nexusClient = createSmartAccountClient({
+  account: await toNexusAccount({
+    signer: provider as any, // EIP-1193 provider
+    chainConfiguration: {
+      chain: baseSepolia,
+      transport: http(),
+      version: getMEEVersion(MEEVersion.V2_1_0)
+      // 注意: accountAddressは通常設定しない（EIP-7702専用）
+    }
+  }),
+  chain: baseSepolia,
+  transport: http(bundlerUrl),
+  paymaster: createBicoPaymasterClient({ paymasterUrl })
+})
+```
+
+**重要な注意事項**:
+- `accountAddress`パラメータはEIP-7702（EOAへのSmart Account機能追加）専用
+- 通常のNexus Account作成では`accountAddress`を指定しない
+- PrivyのEmbedded Walletは、EIP-1193 providerを直接signerとして使用
+- Smart Accountアドレスは、signerから決定論的に計算される（CREATE2）
+
+#### 依存関係の注意点
+Biconomy AbstractJS v1.1.20で必要なpeer dependencies:
+- @rhinestone/module-sdk
+- @safe-global/types-kit
+- @metamask/delegation-toolkit (~0.11.0を使用)
+- @solana-program/system
+- @solana/kit
+
+## よくあるエラーと解決方法
+
+### AA14 initCode must return sender
+**原因**: Smart Accountのアドレス計算の不一致
+**解決**: `accountAddress`パラメータを削除（通常のNexus Accountでは不要）
+
+### SMART_SESSIONS_ADDRESS is not exported
+**原因**: Biconomy AbstractJSのバージョンが古い
+**解決**: @biconomy/abstractjs を v1.1.20以上に更新
+
+### UnauthorizedProviderError
+**原因**: Signerの統合が不適切
+**解決**: Privyのproviderを直接signerとして使用
 
 ## 開発ガイドライン
 
