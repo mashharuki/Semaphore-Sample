@@ -27,7 +27,9 @@ export const PrivyProviders: React.FC<PrivyProvidersProps> = ({ children }) => {
         },
         // エンベデッドウォレットの設定
         embeddedWallets: {
-          createOnLogin: "users-without-wallets"
+          ethereum: {
+            createOnLogin: "users-without-wallets"
+          }
         }
       }}
     >

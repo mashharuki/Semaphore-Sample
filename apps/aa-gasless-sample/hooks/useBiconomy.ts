@@ -2,7 +2,9 @@ import {
   type NexusClient,
   createBicoPaymasterClient,
   createSmartAccountClient,
-  toNexusAccount
+  toNexusAccount,
+  getMEEVersion,
+  MEEVersion
 } from "@biconomy/abstractjs"
 import { useWallets } from "@privy-io/react-auth"
 import { ZKNFT_ABI } from "lib/abi"
@@ -76,9 +78,13 @@ export const useBiconomy = () => {
       const nexusClient = createSmartAccountClient({
         account: await toNexusAccount({
           signer: walletClient,
-          chain: baseSepolia,
-          transport: http()
+          chainConfiguration: {
+            chain: baseSepolia,
+            transport: http(),
+            version: getMEEVersion(MEEVersion.V2_1_0)
+          }
         }),
+        chain: baseSepolia,
         transport: http(
           `https://bundler.biconomy.io/api/v3/${baseSepolia.id}/${process.env.NEXT_PUBLIC_BICONOMY_BUNDLER_API_KEY}`
         ),
