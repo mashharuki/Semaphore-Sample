@@ -2,14 +2,16 @@
 import Stepper from "@/components/Stepper"
 import { useLogContext } from "@/context/LogContext"
 import { useSemaphoreContext } from "@/context/SemaphoreContext"
+import { useBiconomy } from "@/hooks/useBiconomy"
 import useSemaphoreIdentity from "@/hooks/useSemaphoreIdentity"
-import { ethers } from "ethers"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import toast from "react-hot-toast"
+import { type Address, encodeFunctionData } from "viem"
 import Feedback from "../../../contract-artifacts/Feedback.json"
 
 /**
- * GroupsPageコンポーネント
+ * GroupsPageコンポーネント（Biconomy AA対応）
  * @returns
  */
 export default function GroupsPage() {
@@ -18,6 +20,7 @@ export default function GroupsPage() {
   const { _users, refreshUsers, addUser } = useSemaphoreContext()
   const [_loading, setLoading] = useState(false)
   const { _identity, loading: identityLoading } = useSemaphoreIdentity()
+  const { initializeBiconomyAccount, sendTransaction, isLoading: biconomyLoading } = useBiconomy()
 
   useEffect(() => {
     if (_users.length > 0) {
@@ -28,7 +31,7 @@ export default function GroupsPage() {
   const users = useMemo(() => [..._users].reverse(), [_users])
 
   /**
-   * グループに参加する
+   * グループに参加する（Biconomy AA経由）
    */
   const joinGroup = useCallback(async () => {
     if (!_identity) {
@@ -36,71 +39,45 @@ export default function GroupsPage() {
     }
 
     setLoading(true)
-    setLog(`Joining the Feedback group...`)
+    setLog(`Joining the Feedback group via Biconomy AA...`)
 
-    let joinedGroup: boolean = false
+    const toastId = toast.loading("Initializing smart account...")
 
-    if (process.env.NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK) {
-      const response = await fetch(process.env.NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          abi: Feedback.abi,
-          address: process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as string,
-          functionName: "joinGroup",
-          functionParameters: [_identity.commitment.toString()]
-        })
+    try {
+      // 1. Biconomyスマートアカウントを初期化
+      const { nexusClient } = await initializeBiconomyAccount()
+      toast.loading("Sending transaction...", { id: toastId })
+
+      // 2. joinGroupトランザクションデータをエンコード
+      const functionCallData = encodeFunctionData({
+        abi: Feedback.abi,
+        functionName: "joinGroup",
+        args: [_identity.commitment]
       })
 
-      if (response.status === 200) {
-        joinedGroup = true
-      }
-    } else if (
-      process.env.NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT &&
-      process.env.NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID &&
-      process.env.GELATO_RELAYER_API_KEY
-    ) {
-      const iface = new ethers.Interface(Feedback.abi)
-      const request = {
-        chainId: process.env.NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID,
-        target: process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS,
-        data: iface.encodeFunctionData("joinGroup", [_identity.commitment.toString()]),
-        sponsorApiKey: process.env.GELATO_RELAYER_API_KEY
-      }
-      const response = await fetch(process.env.NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request)
-      })
+      // 3. トランザクションを送信
+      const txHash = await sendTransaction(
+        process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as Address,
+        functionCallData
+      )
 
-      if (response.status === 201) {
-        joinedGroup = true
+      if (txHash) {
+        // グループに参加成功
+        addUser(_identity.commitment.toString())
+        setLog(`You have joined the Feedback group! 🎉 Transaction: ${txHash}`)
+        toast.success("Successfully joined the group!", { id: toastId })
+      } else {
+        throw new Error("Transaction hash not returned")
       }
-    } else {
-      // API経由でグループに参加する
-      const response = await fetch("api/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identityCommitment: _identity.commitment.toString()
-        })
-      })
-
-      if (response.status === 200) {
-        joinedGroup = true
-      }
+    } catch (error) {
+      console.error("Error joining group:", error)
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+      setLog(`Error joining group: ${errorMessage}`)
+      toast.error(`Failed to join group: ${errorMessage}`, { id: toastId })
+    } finally {
+      setLoading(false)
     }
-
-    if (joinedGroup) {
-      addUser(_identity.commitment.toString())
-
-      setLog(`You have joined the Feedback group event 🎉 Share your feedback anonymously!`)
-    } else {
-      setLog("Some error occurred, please try again!")
-    }
-
-    setLoading(false)
-  }, [_identity, addUser, setLoading, setLog])
+  }, [_identity, addUser, setLog, initializeBiconomyAccount, sendTransaction])
 
   const userHasJoined = useMemo(
     () => _identity !== undefined && _users.includes(_identity.commitment.toString()),
@@ -159,9 +136,14 @@ export default function GroupsPage() {
       )}
 
       <div className="join-group-button">
-        <button className="button" onClick={joinGroup} disabled={_loading || !_identity || userHasJoined} type="button">
+        <button
+          className="button"
+          onClick={joinGroup}
+          disabled={_loading || biconomyLoading || !_identity || userHasJoined}
+          type="button"
+        >
           <span>Join group</span>
-          {_loading && <div className="loader"></div>}
+          {(_loading || biconomyLoading) && <div className="loader"></div>}
         </button>
       </div>
 

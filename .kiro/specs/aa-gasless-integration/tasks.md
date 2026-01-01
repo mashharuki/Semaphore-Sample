@@ -73,7 +73,7 @@
   - Paymasterエラー、Bundlerタイムアウトのエラーハンドリング
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 7.1, 7.2_
 
-- [ ] 3.2 グループ参加機能のAA化
+- [x] 3.2 グループ参加機能のAA化
   - src/app/group/page.tsxを開く
   - /api/join API呼び出しを削除
   - useBiconomyフックを使用してスマートアカウント初期化
