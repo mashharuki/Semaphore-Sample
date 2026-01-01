@@ -65,7 +65,7 @@
 ## Phase 3: Account Abstraction統合
 
 - [ ] 3. Biconomy AAによるガスレストランザクション実装
-- [ ] 3.1 useBiconomyフックの作成
+- [x] 3.1 useBiconomyフックの作成
   - src/hooks/useBiconomy.tsを作成
   - initializeBiconomyAccount関数を実装（toNexusAccount、createSmartAccountClient）
   - スマートアカウント作成のローディング・エラー状態管理
