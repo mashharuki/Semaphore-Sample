@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import Auth from "../components/Auth"
 import Stepper from "../components/Stepper"
+import { Spinner } from "@/components/ui/spinner"
 import { useAuth } from "../context/AuthContext"
 import { useLogContext } from "../context/LogContext"
 import { supabase } from "../utils/supabase"
@@ -83,7 +84,11 @@ export default function IdentitiesPage() {
   }, [user, setLog])
 
   if (!ready) {
-    return <div className="loader" role="status"></div>
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   return (
@@ -130,7 +135,9 @@ export default function IdentitiesPage() {
           </div>
 
           {fetchingIdentity ? (
-            <div className="loader"></div>
+            <div className="flex items-center justify-center py-8">
+              <Spinner size="md" />
+            </div>
           ) : (
             _identity && (
               <div className="key-wrapper">

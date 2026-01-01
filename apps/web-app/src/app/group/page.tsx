@@ -1,5 +1,6 @@
 "use client"
 import Stepper from "@/components/Stepper"
+import { Spinner } from "@/components/ui/spinner"
 import { useLogContext } from "@/context/LogContext"
 import { useSemaphoreContext } from "@/context/SemaphoreContext"
 import { useBiconomy } from "@/hooks/useBiconomy"
@@ -85,7 +86,11 @@ export default function GroupsPage() {
   )
 
   if (identityLoading) {
-    return <div className="loader"></div>
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   return (
@@ -143,7 +148,7 @@ export default function GroupsPage() {
           type="button"
         >
           <span>Join group</span>
-          {(_loading || biconomyLoading) && <div className="loader"></div>}
+          {(_loading || biconomyLoading) && <Spinner size="sm" className="ml-2" />}
         </button>
       </div>
 

@@ -143,22 +143,17 @@ cp .env.example .env
 
 | 変数名                                   | 説明                                                                      |
 | :--------------------------------------- | :------------------------------------------------------------------------ |
-| `DEFAULT_NETWORK`                        | 使用するネットワーク（例: `sepolia`, `hardhat`）。                        |
-| `ETHEREUM_PRIVATE_KEY`                   | デプロイやトランザクション送信に使用するアカウントの秘密鍵。              |
+| `DEFAULT_NETWORK`                        | 使用するネットワーク（例: `sepolia`, `baseSepolia`, `hardhat`）。        |
+| `ETHEREUM_PRIVATE_KEY`                   | コントラクトデプロイに使用するアカウントの秘密鍵（contracts用）。         |
 | `INFURA_API_KEY`                         | Infura 経由でブロックチェーンに接続するための API キー。                  |
 | `NEXT_PUBLIC_DEFAULT_NETWORK`            | フロントエンドが接続するネットワーク（通常は `DEFAULT_NETWORK` と同じ）。 |
 | `NEXT_PUBLIC_INFURA_API_KEY`             | フロントエンドで使用する Infura API キー。                                |
 | `NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS` | 使用するネットワークでデプロイ済みの Semaphore コントラクトアドレス。     |
 | `NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS`  | デプロイした `Feedback.sol` のコントラクトアドレス。                      |
 | `NEXT_PUBLIC_GROUP_ID`                   | Semaphore グループの ID。                                                 |
-
-### 任意の設定（リレイヤー/ガスレス送信）
-
-ガスレス機能を試す場合は、以下の変数も設定してください。
-
-- `GELATO_RELAYER_API_KEY`
-- `NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT`
-- `NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID`
+| `NEXT_PUBLIC_PRIVY_APP_ID`               | Privy 認証に使用する App ID（web-app用）。                               |
+| `NEXT_PUBLIC_BICONOMY_BUNDLER_API_KEY`   | Biconomy Bundler API キー（web-app用）。                                 |
+| `NEXT_PUBLIC_BICONOMY_PAYMASTER_API_KEY` | Biconomy Paymaster API キー（web-app用）。                               |
 
 ---
 

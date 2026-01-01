@@ -106,7 +106,7 @@
 ## Phase 4: クリーンアップと仕上げ
 
 - [ ] 4. 最終調整とドキュメント整備
-- [ ] 4.1 (P) 未使用設定の削除
+- [x] 4.1 (P) 未使用設定の削除
   - .env.exampleからNEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK削除
   - .env.exampleからNEXT_PUBLIC_GELATO_RELAYER_ENDPOINT、NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID削除
   - .envから同様の環境変数を削除
@@ -114,7 +114,7 @@
   - Supabase Auth依存の完全削除確認
   - _Requirements: 5.1, 5.2, 5.4_
 
-- [ ] 4.2 (P) UIコンポーネントの最終調整
+- [x] 4.2 (P) UIコンポーネントの最終調整
   - shadcn/uiコンポーネント（Button、Card）を既存ページに適用
   - ローディングスピナーコンポーネントを作成・統合
   - ダークテーマ、グラスモーフィズム効果をCSSに追加
