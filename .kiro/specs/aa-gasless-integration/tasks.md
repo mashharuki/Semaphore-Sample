@@ -64,7 +64,7 @@
 
 ## Phase 3: Account Abstraction統合
 
-- [ ] 3. Biconomy AAによるガスレストランザクション実装
+- [x] 3. Biconomy AAによるガスレストランザクション実装
 - [x] 3.1 useBiconomyフックの作成
   - src/hooks/useBiconomy.tsを作成
   - initializeBiconomyAccount関数を実装（toNexusAccount、createSmartAccountClient）
@@ -89,7 +89,7 @@
   - エラーハンドリング（Paymaster失敗、Invalid Proof等）を実装
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 4.3, 7.1, 7.2, 7.4_
 
-- [ ] 3.4 SemaphoreContextのviem移行
+- [x] 3.4 SemaphoreContextのviem移行
   - src/context/SemaphoreContext.tsxを開く
   - ethers.jsのSemaphoreEthersをviemのpublicClient + getLogsに置き換え
   - refreshUsers関数をviem対応に書き換え
@@ -97,7 +97,7 @@
   - コントラクトABIのimportパス確認（Feedback.json）
   - _Requirements: 4.4_
 
-- [ ] 3.5 サーバーサイドAPIの削除
+- [x] 3.5 サーバーサイドAPIの削除
   - src/app/api/join/route.tsを削除
   - src/app/api/feedback/route.tsを削除
   - PRIVATE_KEY環境変数への参照をすべて削除
