@@ -2,15 +2,15 @@
 
 ## Phase 1: 基盤整備
 
-- [ ] 1. プロジェクト依存関係とツールチェーンのセットアップ
-- [ ] 1.1 (P) AA統合に必要なNPMパッケージをインストール
+- [x] 1. プロジェクト依存関係とツールチェーンのセットアップ
+- [x] 1.1 (P) AA統合に必要なNPMパッケージをインストール
   - Privy認証SDK（@privy-io/react-auth）をインストール
   - Biconomy AA SDK（@biconomy/abstractjs、@biconomy/account）をインストール
   - viemライブラリをインストール
   - react-hot-toast通知ライブラリをインストール
   - _Requirements: 1.1, 2.1, 3.1_
 
-- [ ] 1.2 (P) Tailwind CSSとshadcn/uiのセットアップ
+- [x] 1.2 (P) Tailwind CSSとshadcn/uiのセットアップ
   - Tailwind CSS、PostCSS、Autoprefixerをインストール
   - tailwind.config.js、postcss.config.jsを作成
   - globals.cssにTailwind directives追加
@@ -18,20 +18,20 @@
   - Button、Card、Input、Labelコンポーネントを追加
   - _Requirements: 6.1_
 
-- [ ] 1.3 環境変数の設定と検証
+- [x] 1.3 環境変数の設定と検証
   - .env.exampleにPrivy、Biconomy環境変数を追加
   - NEXT_PUBLIC_PRIVY_APP_ID、NEXT_PUBLIC_BICONOMY_BUNDLER_API_KEY、NEXT_PUBLIC_BICONOMY_PAYMASTER_API_KEYのプレースホルダー追加
   - 環境変数バリデーション関数を実装（起動時チェック）
   - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6_
 
-- [ ] 1.4 (P) PrivyProviderの作成と統合
+- [x] 1.4 (P) PrivyProviderの作成と統合
   - src/providers/privy-providers.tsxを作成
   - Privy設定（loginMethods、embeddedWallets、supportedChains）を実装
   - Base Sepolia（chain ID 84532）をサポートチェーンに追加
   - app/layout.tsxでPrivyProviderをルートにラップ
   - _Requirements: 1.1_
 
-- [ ] 1.5 (P) ToasterProviderの作成と統合
+- [x] 1.5 (P) ToasterProviderの作成と統合
   - src/providers/toaster-provider.tsxを作成
   - react-hot-toastのToasterコンポーネントを設定
   - app/layout.tsxでToasterProviderを追加
@@ -40,14 +40,14 @@
 ## Phase 2: 認証移行
 
 - [ ] 2. Privy認証への完全移行
-- [ ] 2.1 AuthContextのPrivy対応実装
+- [x] 2.1 AuthContextのPrivy対応実装
   - src/context/AuthContext.tsxを開き、Supabase Auth依存を削除
   - usePrivyフックから認証状態（user、ready、authenticated、login、logout）を取得
   - AuthContextTypeインターフェースをPrivy対応に更新
   - エラーハンドリング（認証失敗、リトライロジック）を実装
   - _Requirements: 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 2.2 アイデンティティ管理ページのPrivy統合
+- [x] 2.2 アイデンティティ管理ページのPrivy統合
   - src/app/page.tsxを開き、Supabase Authコンポーネントを削除
   - Privyのlogin、logout関数を使用
   - Privy user.idをuseSemaphoreIdentityに渡してアイデンティティ取得

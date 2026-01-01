@@ -1,17 +1,17 @@
 "use client"
 
-import { Session, User } from "@supabase/supabase-js"
-import { createContext, ReactNode, useContext, useEffect, useState } from "react"
-import { supabase } from "../utils/supabase"
+import { usePrivy } from "@privy-io/react-auth"
+import { createContext, ReactNode, useContext } from "react"
 
 /**
- * AuthContextType: 認証コンテキストの型定義。
+ * AuthContextType: 認証コンテキストの型定義(Privy対応)。
  */
 interface AuthContextType {
-  user: User | null
-  session: Session | null
-  loading: boolean
-  signOut: () => Promise<void>
+  user: any | null // Privy User型
+  ready: boolean
+  authenticated: boolean
+  login: () => void
+  logout: () => Promise<void>
 }
 
 // 認証状態を共有するためのコンテキスト
@@ -19,44 +19,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 /**
  * AuthProvider:
- * Supabaseの認証状態（ユーザー、セッション）を管理し、子コンポーネントに提供するプロバイダー。
+ * Privyの認証状態(ユーザー、セッション)を管理し、子コンポーネントに提供するプロバイダー。
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, ready, authenticated, login, logout } = usePrivy()
 
-  useEffect(() => {
-    // 初期化時に現在のセッションを取得
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-
-    // 認証状態の変化（ログイン、ログアウト、セッション更新など）を購読
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-
-    // クリーンアップ時に購読を解除
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  /**
-   * ログアウト処理
-   */
-  const signOut = async () => {
-    await supabase.auth.signOut()
-  }
-
-  return <AuthContext.Provider value={{ user, session, loading, signOut }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        ready,
+        authenticated,
+        login,
+        logout
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 /**
