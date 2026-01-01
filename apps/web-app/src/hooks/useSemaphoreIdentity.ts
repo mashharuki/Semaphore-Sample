@@ -1,24 +1,25 @@
 import { Identity } from "@semaphore-protocol/core"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useAuth } from "../context/AuthContext"
 import { supabase } from "../utils/supabase"
 
 /**
  * useSemaphoreIdentity:
- * SupabaseからSemaphoreアイデンティティを読み込むカスタムフック。
+ * SupabaseからSemaphoreアイデンティティを読み込むカスタムフック（Privy対応）。
  * アイデンティティが存在しない場合はトップページにリダイレクトします。
  */
 export default function useSemaphoreIdentity() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, ready } = useAuth()
   const [_identity, setIdentity] = useState<Identity>()
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     const fetchIdentity = async () => {
-      // 認証情報の読み込み中は何もしない
-      if (authLoading) return
+      // Privy初期化中は何もしない
+      if (!ready) return
 
       // 未ログインの場合はトップページ（Identity作成ページ）へ
       if (!user) {
@@ -26,25 +27,42 @@ export default function useSemaphoreIdentity() {
         return
       }
 
-      // Supabaseのidentitiesテーブルから、ログイン中ユーザーに対応する秘密鍵を取得
-      const { data, error } = await supabase.from("identities").select("private_key").eq("user_id", user.id).single()
+      try {
+        // Supabaseのidentitiesテーブルから、Privyユーザーに対応する秘密鍵を取得
+        const { data, error: fetchError } = await supabase
+          .from("identities")
+          .select("private_key")
+          .eq("user_id", user.id)
+          .single()
 
-      if (error || !data) {
-        // アイデンティティが未作成の場合はトップページへ
+        if (fetchError) {
+          setError(fetchError)
+          // アイデンティティが未作成の場合はトップページへ
+          router.push("/")
+          return
+        }
+
+        if (!data) {
+          // アイデンティティが未作成の場合はトップページへ
+          router.push("/")
+          return
+        }
+
+        // 取得した秘密鍵からIdentityオブジェクトを復元
+        setIdentity(new Identity(data.private_key))
+        setLoading(false)
+      } catch (err) {
+        setError(err as Error)
         router.push("/")
-        return
       }
-
-      // 取得した秘密鍵からIdentityオブジェクトを復元
-      setIdentity(new Identity(data.private_key))
-      setLoading(false)
     }
 
     fetchIdentity()
-  }, [router, user, authLoading])
+  }, [router, user, ready])
 
   return {
     _identity,
-    loading: authLoading || loading
+    loading: !ready || loading,
+    error
   }
 }

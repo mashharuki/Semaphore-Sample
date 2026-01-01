@@ -39,7 +39,7 @@
 
 ## Phase 2: 認証移行
 
-- [ ] 2. Privy認証への完全移行
+- [x] 2. Privy認証への完全移行
 - [x] 2.1 AuthContextのPrivy対応実装
   - src/context/AuthContext.tsxを開き、Supabase Auth依存を削除
   - usePrivyフックから認証状態（user、ready、authenticated、login、logout）を取得
@@ -55,7 +55,7 @@
   - ローディング状態（Privy.ready）のハンドリング
   - _Requirements: 1.2, 1.3, 1.4_
 
-- [ ] 2.3 useSemaphoreIdentityのPrivy連携対応
+- [x] 2.3 useSemaphoreIdentityのPrivy連携対応
   - src/hooks/useSemaphoreIdentity.tsを開く
   - Supabase Auth user.idをPrivy user.idに置き換え
   - Supabaseクエリのuser_idマッピングをPrivy user.idに変更
