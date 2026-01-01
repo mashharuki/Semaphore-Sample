@@ -129,7 +129,7 @@
   - aa-gasless-sampleとの主要な違いをドキュメント化
   - _Requirements: 8.3, 8.4, 8.5_
 
-- [ ] 4.4 E2E統合テストとフロー検証
+- [x] 4.4 E2E統合テストとフロー検証
   - Privyログインフロー動作確認（メール、ウォレット、Google）
   - アイデンティティ作成・保存・復元フロー確認
   - スマートアカウント作成フロー確認
@@ -137,6 +137,7 @@
   - フィードバック送信トランザクション確認
   - エラーハンドリング確認（Paymaster失敗シミュレーション、ネットワークエラー）
   - _Requirements: 8.1, 8.2_
+  - _Test Plan: .kiro/specs/aa-gasless-integration/e2e-test-plan.md_
 
 - [ ]* 4.5 単体テスト・統合テストの実装（オプショナル）
   - useBiconomy.initializeBiconomyAccount単体テスト（モック: Privy、Biconomy SDK）
