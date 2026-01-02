@@ -18,7 +18,7 @@ import Feedback from "../../../contract-artifacts/Feedback.json"
 export default function ProofsPage() {
   const router = useRouter()
   const { setLog } = useLogContext()
-  const { _users, _feedback, refreshFeedback, addFeedback } = useSemaphoreContext()
+  const { _users, _feedback, refreshUsers, refreshFeedback, addFeedback } = useSemaphoreContext()
   const [_loading, setLoading] = useState(false)
   const { _identity, loading: identityLoading } = useSemaphoreIdentity()
   const { initializeBiconomyAccount, sendTransaction, isLoading: biconomyLoading } = useBiconomy()
@@ -45,19 +45,23 @@ export default function ProofsPage() {
       setLoading(true)
       setLog(`Generating zero-knowledge proof...`)
 
-      const toastId = toast.loading("Generating proof...")
+      const toastId = toast.loading("Refreshing group members...")
 
       try {
-        // 1. Groupインスタンスを作成
-        const group = new Group(_users)
+        // 1. 最新のグループメンバーリストを取得
+        const latestUsers = await refreshUsers()
+        toast.loading("Generating proof...", { id: toastId })
 
-        // 2. メッセージをエンコーディングする（viemを使用）
+        // 2. Groupインスタンスを作成（最新のメンバーリストを使用）
+        const group = new Group(latestUsers)
+
+        // 3. メッセージをエンコーディングする（viemを使用）
         const messageEncoded = encodeAbiParameters(parseAbiParameters("string"), [feedbackMessage])
         // bytes32に変換（最初の32バイトのみ使用）
         const messageBytes32 = messageEncoded.slice(0, 66) as `0x${string}`
         const message = BigInt(messageBytes32)
 
-        // 3. ZK Proofを生成する
+        // 4. ZK Proofを生成する
         toast.loading("Generating zero-knowledge proof...", { id: toastId })
         const { points, merkleTreeDepth, merkleTreeRoot, nullifier } = await generateProof(
           _identity,
@@ -66,11 +70,11 @@ export default function ProofsPage() {
           process.env.NEXT_PUBLIC_GROUP_ID as string
         )
 
-        // 4. Biconomyスマートアカウントを初期化
+        // 5. Biconomyスマートアカウントを初期化
         toast.loading("Initializing smart account...", { id: toastId })
         const { nexusClient } = await initializeBiconomyAccount()
 
-        // 5. sendFeedbackトランザクションデータをエンコード
+        // 6. sendFeedbackトランザクションデータをエンコード
         toast.loading("Sending anonymous feedback...", { id: toastId })
         const functionCallData = encodeFunctionData({
           abi: Feedback.abi,
@@ -78,7 +82,7 @@ export default function ProofsPage() {
           args: [merkleTreeDepth, merkleTreeRoot, nullifier, message, points]
         })
 
-        // 6. トランザクションを送信（初期化したnexusClientを渡す）
+        // 7. トランザクションを送信（初期化したnexusClientを渡す）
         const txHash = await sendTransaction(
           process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as Address,
           functionCallData,
@@ -102,7 +106,7 @@ export default function ProofsPage() {
         setLoading(false)
       }
     }
-  }, [_identity, _users, addFeedback, setLog, initializeBiconomyAccount, sendTransaction])
+  }, [_identity, _users, addFeedback, setLog, refreshUsers, initializeBiconomyAccount, sendTransaction])
 
   if (identityLoading) {
     return <div className="loader"></div>

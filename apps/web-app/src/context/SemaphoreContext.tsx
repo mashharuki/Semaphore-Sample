@@ -9,7 +9,7 @@ import { hexToString } from "viem"
 export type SemaphoreContextType = {
   _users: string[] // グループに参加しているユーザー（Identity Commitment）のリスト
   _feedback: string[] // 送信されたフィードバック（メッセージ）のリスト
-  refreshUsers: () => Promise<void> // メンバーリストを最新の状態に更新する関数
+  refreshUsers: () => Promise<string[]> // メンバーリストを最新の状態に更新し、更新されたリストを返す関数
   addUser: (user: string) => void // ローカルの状態にユーザーを一時的に追加する関数
   refreshFeedback: () => Promise<void> // フィードバックリストを最新の状態に更新する関数
   addFeedback: (feedback: string) => void // ローカルの状態にフィードバックを一時的に追加する関数
@@ -49,7 +49,7 @@ export const SemaphoreContextProvider: React.FC<ProviderProps> = ({ children }) 
    * refreshUsers: Semaphoreグループのメンバー一覧をコントラクトから取得します。
    * viemのgetLogsを使用してMemberAddedイベントからメンバーを取得します。
    */
-  const refreshUsers = useCallback(async (): Promise<void> => {
+  const refreshUsers = useCallback(async (): Promise<string[]> => {
     try {
       const publicClient = getPublicClient()
 
@@ -76,6 +76,7 @@ export const SemaphoreContextProvider: React.FC<ProviderProps> = ({ children }) 
       }).filter(Boolean)
 
       setUsers(members)
+      return members // 更新されたメンバーリストを返す
     } catch (error) {
       console.error("Error refreshing users:", error)
       throw error

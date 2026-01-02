@@ -134,10 +134,14 @@ export const useBiconomy = () => {
         console.log("Transaction data:", data)
 
         // トランザクションを送信
+        // ZK証明検証など計算量の多い処理に対応するため、十分なガス制限を設定
         const hash = await clientToUse.sendTransaction({
           to,
           data,
-          chain: baseSepolia
+          chain: baseSepolia,
+          // ガス制限を明示的に設定（ZK証明検証には多くのガスが必要）
+          callGasLimit: BigInt(1000000), // 実行ガス制限を1M
+          verificationGasLimit: BigInt(500000), // 検証ガス制限を500K
         })
 
         console.log("Transaction hash:", hash)
