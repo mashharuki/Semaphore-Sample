@@ -8,7 +8,8 @@ import useSemaphoreIdentity from "@/hooks/useSemaphoreIdentity"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import toast from "react-hot-toast"
-import { type Address, encodeFunctionData } from "viem"
+import { type Address, encodeFunctionData, createPublicClient, http } from "viem"
+import { baseSepolia } from "viem/chains"
 import Feedback from "../../../contract-artifacts/Feedback.json"
 
 /**
@@ -22,6 +23,19 @@ export default function GroupsPage() {
   const [_loading, setLoading] = useState(false)
   const { _identity, loading: identityLoading } = useSemaphoreIdentity()
   const { initializeBiconomyAccount, sendTransaction, isLoading: biconomyLoading } = useBiconomy()
+
+  // ページマウント時に最新のグループメンバーを取得
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        await refreshUsers()
+      } catch (error) {
+        console.error("Error fetching group members:", error)
+      }
+    }
+    
+    fetchInitialData()
+  }, [refreshUsers])
 
   useEffect(() => {
     if (_users.length > 0) {
@@ -56,11 +70,15 @@ export default function GroupsPage() {
         args: [_identity.commitment]
       })
 
-      // 3. トランザクションを送信（初期化したnexusClientを渡す）
+      // 3. トランザクションを送信（joinGroupは低めのガス制限で十分）
       const txHash = await sendTransaction(
         process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as Address,
         functionCallData,
-        nexusClient
+        nexusClient,
+        {
+          callGasLimit: BigInt(300000),      // joinGroupは300K
+          verificationGasLimit: BigInt(200000) // 検証は200K
+        }
       )
 
       if (txHash) {
@@ -70,30 +88,62 @@ export default function GroupsPage() {
         console.log("Transaction hash:", txHash)
         console.log("User commitment:", _identity.commitment.toString())
         
-        // トランザクションがブロックに含まれるのを待つ（最大30秒）
-        let confirmed = false
-        let attempts = 0
-        const maxAttempts = 6 // 30秒（5秒 x 6回）
+        // publicClientを作成してトランザクションレシートを確認
+        const publicClient = createPublicClient({
+          chain: baseSepolia,
+          transport: http()
+        })
         
-        while (!confirmed && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 5000))
-          const latestMembers = await refreshUsers()
+        try {
+          // トランザクションレシートを取得（最大60秒待機）
+          console.log("Waiting for transaction receipt...")
+          const receipt = await publicClient.waitForTransactionReceipt({
+            hash: txHash as `0x${string}`,
+            timeout: 60_000
+          })
           
-          if (latestMembers.includes(_identity.commitment.toString())) {
-            confirmed = true
-            console.log("User successfully added to group!")
-          } else {
-            attempts++
-            console.log(`Attempt ${attempts}/${maxAttempts}: User not yet in group, retrying...`)
+          console.log("Transaction receipt:", receipt)
+          console.log("Transaction status:", receipt.status === "success" ? "SUCCESS" : "FAILED")
+          
+          if (receipt.status === "reverted") {
+            throw new Error("Transaction was reverted on-chain")
           }
+          
+          // トランザクション成功後、グループメンバーを確認
+          toast.loading("Verifying group membership...", { id: toastId })
+          
+          let confirmed = false
+          let attempts = 0
+          const maxAttempts = 6
+          
+          while (!confirmed && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 3000))
+            const latestMembers = await refreshUsers()
+            
+            if (latestMembers.includes(_identity.commitment.toString())) {
+              confirmed = true
+              console.log("User successfully added to group!")
+            } else {
+              attempts++
+              console.log(`Attempt ${attempts}/${maxAttempts}: User not yet in group, retrying...`)
+            }
+          }
+          
+          if (!confirmed) {
+            console.warn("Transaction succeeded but user not found in group yet. This may be due to indexing delay.")
+            toast("Transaction succeeded! If you don't see yourself in the group, please refresh the page.", { 
+              id: toastId, 
+              duration: 8000,
+              icon: "⚠️"
+            })
+          } else {
+            setLog(`You have joined the Feedback group! 🎉 Transaction: ${txHash}`)
+            toast.success("Successfully joined the group!", { id: toastId })
+          }
+        } catch (error) {
+          console.error("Error waiting for transaction receipt:", error)
+          throw new Error(`Transaction may have failed. Please check on Base Sepolia explorer: https://sepolia.basescan.org/tx/${txHash}`)
         }
-        
-        if (!confirmed) {
-          console.warn("Transaction may still be pending. Please refresh the page if you don't see yourself in the group.")
-        }
-        
-        setLog(`You have joined the Feedback group! 🎉 Transaction: ${txHash}`)
-        toast.success("Successfully joined the group!", { id: toastId })
       } else {
         throw new Error("Transaction hash not returned")
       }
@@ -156,6 +206,15 @@ export default function GroupsPage() {
           Refresh
         </button>
       </div>
+
+      {/* 参加状態の表示 */}
+      {_identity && userHasJoined && (
+        <div style={{ padding: "10px", marginBottom: "10px", backgroundColor: "#2d3748", borderRadius: "8px", border: "1px solid #4a5568" }}>
+          <p style={{ margin: 0, color: "#48bb78" }}>
+            ✓ You are already a member of this group
+          </p>
+        </div>
+      )}
 
       {_users.length > 0 && (
         <div className="users-wrapper">

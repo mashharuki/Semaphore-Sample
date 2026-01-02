@@ -23,6 +23,22 @@ export default function ProofsPage() {
   const { _identity, loading: identityLoading } = useSemaphoreIdentity()
   const { initializeBiconomyAccount, sendTransaction, isLoading: biconomyLoading } = useBiconomy()
 
+  // ページマウント時に最新のグループメンバーとフィードバックを取得
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        await Promise.all([
+          refreshUsers(),
+          refreshFeedback()
+        ])
+      } catch (error) {
+        console.error("Error fetching initial data:", error)
+      }
+    }
+    
+    fetchInitialData()
+  }, [refreshUsers, refreshFeedback])
+
   useEffect(() => {
     if (_feedback.length > 0) {
       setLog(`${_feedback.length} feedback retrieved from the group 🤙🏽`)

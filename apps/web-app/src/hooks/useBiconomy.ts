@@ -121,7 +121,12 @@ export const useBiconomy = () => {
    * @throws スマートアカウントが初期化されていない場合、またはトランザクション送信に失敗した場合
    */
   const sendTransaction = useCallback(
-    async (to: Address, data: Hex, nexusClient?: NexusClient): Promise<string | null> => {
+    async (
+      to: Address,
+      data: Hex,
+      nexusClient?: NexusClient,
+      gasLimits?: { callGasLimit?: bigint; verificationGasLimit?: bigint }
+    ): Promise<string | null> => {
       try {
         // 引数で渡されたnexusClientを優先、なければ内部状態を使用
         const clientToUse = nexusClient || accountState.nexusAccount
@@ -132,19 +137,20 @@ export const useBiconomy = () => {
 
         console.log("Sending transaction to:", to)
         console.log("Transaction data:", data)
+        console.log("Gas limits:", gasLimits)
 
         // トランザクションを送信
-        // ZK証明検証など計算量の多い処理に対応するため、十分なガス制限を設定
+        // デフォルトはZK証明検証用の高いガス制限、オプションで上書き可能
         const hash = await clientToUse.sendTransaction({
           to,
           data,
           chain: baseSepolia,
-          // ガス制限を明示的に設定（ZK証明検証には多くのガスが必要）
-          callGasLimit: BigInt(1000000), // 実行ガス制限を1M
-          verificationGasLimit: BigInt(500000), // 検証ガス制限を500K
+          callGasLimit: gasLimits?.callGasLimit ?? BigInt(1000000),
+          verificationGasLimit: gasLimits?.verificationGasLimit ?? BigInt(500000),
         })
 
         console.log("Transaction hash:", hash)
+        console.log("Check transaction on Base Sepolia:", `https://sepolia.basescan.org/tx/${hash}`)
 
         return hash
       } catch (error) {
