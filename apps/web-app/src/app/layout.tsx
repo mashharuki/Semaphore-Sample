@@ -1,9 +1,5 @@
 import PageContainer from "@/components/PageContainer"
-import { AuthProvider } from "@/context/AuthContext"
-import { LogContextProvider } from "@/context/LogContext"
-import { SemaphoreContextProvider } from "@/context/SemaphoreContext"
-import { PrivyProvider } from "@/providers/privy-provider"
-import { ToasterProvider } from "@/providers/toaster-provider"
+import { AppProviders } from "@/providers/app-providers"
 import type { Metadata } from "next"
 import "./globals.css"
 
@@ -51,17 +47,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet"></link>
       </head>
       <body suppressHydrationWarning className={inter.className}>
-        <PrivyProvider>
-          <AuthProvider>
-            <SemaphoreContextProvider>
-              <LogContextProvider>
-                <ToasterProvider>
-                  <PageContainer>{children}</PageContainer>
-                </ToasterProvider>
-              </LogContextProvider>
-            </SemaphoreContextProvider>
-          </AuthProvider>
-        </PrivyProvider>
+        <AppProviders>
+          <PageContainer>{children}</PageContainer>
+        </AppProviders>
       </body>
     </html>
   )
