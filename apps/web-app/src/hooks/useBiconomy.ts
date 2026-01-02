@@ -12,6 +12,35 @@ import { type Address, type Hex, http } from "viem"
 import { baseSepolia } from "viem/chains"
 
 /**
+ * チェーンIDとブロックエクスプローラーのベースURLのマッピング
+ */
+const BLOCK_EXPLORER_URLS: Record<number, string> = {
+  1: "https://etherscan.io", // Ethereum Mainnet
+  84532: "https://sepolia.basescan.org", // Base Sepolia
+  8453: "https://basescan.org", // Base Mainnet
+  11155111: "https://sepolia.etherscan.io", // Sepolia
+  137: "https://polygonscan.com", // Polygon Mainnet
+  80002: "https://amoy.polygonscan.com", // Polygon Amoy (Testnet)
+  10: "https://optimistic.etherscan.io", // Optimism Mainnet
+  42161: "https://arbiscan.io", // Arbitrum One
+}
+
+/**
+ * チェーンIDからブロックエクスプローラーのトランザクションURLを生成する
+ *
+ * @param chainId チェーンID
+ * @param txHash トランザクションハッシュ
+ * @returns ブロックエクスプローラーのURL
+ */
+const getBlockExplorerUrl = (chainId: number, txHash: string): string => {
+  const baseUrl = BLOCK_EXPLORER_URLS[chainId]
+  if (!baseUrl) {
+    return `Chain ID ${chainId} - Transaction: ${txHash}`
+  }
+  return `${baseUrl}/tx/${txHash}`
+}
+
+/**
  * Biconomyアカウントの状態を管理する型
  */
 interface BiconomyAccountState {
@@ -150,7 +179,7 @@ export const useBiconomy = () => {
         })
 
         console.log("Transaction hash:", hash)
-        console.log("Check transaction on Base Sepolia:", `https://sepolia.basescan.org/tx/${hash}`)
+        console.log("Check transaction:", getBlockExplorerUrl(baseSepolia.id, hash))
 
         return hash
       } catch (error) {

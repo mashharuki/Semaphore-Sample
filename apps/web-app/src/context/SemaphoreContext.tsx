@@ -1,9 +1,8 @@
 "use client"
 
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react"
-import { createPublicClient, http, decodeEventLog, parseAbiItem } from "viem"
+import { createPublicClient, hexToString, http, parseAbiItem } from "viem"
 import { baseSepolia } from "viem/chains"
-import { hexToString } from "viem"
 
 // SemaphoreContextType: コンテキストで共有されるデータの型定義
 export type SemaphoreContextType = {
@@ -96,21 +95,21 @@ export const SemaphoreContextProvider: React.FC<ProviderProps> = ({ children }) 
 
   /**
    * refreshFeedback: 検証済みの証明（フィードバック）の一覧をコントラクトから取得します。
-   * viemのgetLogsを使用してProofVerifiedイベントからフィードバックを取得します。
+   * viemのgetLogsを使用してProofValidatedイベントからフィードバックを取得します。
    */
   const refreshFeedback = useCallback(async (): Promise<void> => {
     try {
       const publicClient = getPublicClient()
 
-      // ProofVerifiedイベントのABI定義
-      const proofVerifiedEvent = parseAbiItem(
-        "event ProofVerified(uint256 indexed groupId, uint256 merkleTreeDepth, uint256 merkleTreeRoot, uint256 nullifier, uint256 message, uint256 scope, uint256[8] points)"
+      // ProofValidatedイベントのABI定義
+      const proofValidatedEvent = parseAbiItem(
+        "event ProofValidated(uint256 indexed groupId, uint256 merkleTreeDepth, uint256 indexed merkleTreeRoot, uint256 nullifier, uint256 message, uint256 indexed scope, uint256[8] points)"
       )
 
-      // ProofVerifiedイベントログを取得
+      // ProofValidatedイベントログを取得
       const logs = await publicClient.getLogs({
         address: process.env.NEXT_PUBLIC_SEMAPHORE_CONTRACT_ADDRESS as `0x${string}`,
-        event: proofVerifiedEvent,
+        event: proofValidatedEvent,
         args: {
           groupId: BigInt(process.env.NEXT_PUBLIC_GROUP_ID as string)
         },
@@ -118,21 +117,34 @@ export const SemaphoreContextProvider: React.FC<ProviderProps> = ({ children }) 
         toBlock: "latest"
       })
 
+      console.log("Fetched ProofValidated logs:", logs)
+
       // messageフィールドをデコードしてフィードバック文字列として取得
       const feedbackMessages = logs.map((log) => {
         const { args } = log
-        if (!args.message) return ""
+        if (!args.message) {
+          console.log("No message in log:", log)
+          return ""
+        }
 
         try {
           // messageをbytes32形式の16進数文字列に変換してデコード
           const messageHex = `0x${args.message.toString(16).padStart(64, "0")}` as `0x${string}`
+          console.log("Message value:", args.message)
+          console.log("Message hex:", messageHex)
+          
           // hexToStringでデコード（null文字を除去）
-          return hexToString(messageHex, { size: 32 }).replace(/\0/g, "")
+          const decoded = hexToString(messageHex, { size: 32 }).replace(/\0/g, "")
+          console.log("Decoded message:", decoded)
+          
+          return decoded
         } catch (error) {
-          console.error("Error decoding message:", error)
+          console.error("Error decoding message:", error, "for log:", log)
           return ""
         }
       }).filter(Boolean)
+      
+      console.log("All decoded feedback messages:", feedbackMessages)
 
       setFeedback(feedbackMessages)
     } catch (error) {

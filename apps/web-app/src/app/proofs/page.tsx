@@ -9,7 +9,7 @@ import { generateProof, Group } from "@semaphore-protocol/core"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import toast from "react-hot-toast"
-import { type Address, encodeFunctionData, encodeAbiParameters, parseAbiParameters } from "viem"
+import { type Address, encodeFunctionData, stringToHex } from "viem"
 import Feedback from "../../../contract-artifacts/Feedback.json"
 
 /**
@@ -82,11 +82,10 @@ export default function ProofsPage() {
         // Semaphore の Group クラスは BigInt の配列を期待します
         const group = new Group(latestUsers.map(member => BigInt(member)))
 
-        // 3. メッセージをエンコーディングする（viemを使用）
-        const messageEncoded = encodeAbiParameters(parseAbiParameters("string"), [feedbackMessage])
-        // bytes32に変換（最初の32バイトのみ使用）
-        const messageBytes32 = messageEncoded.slice(0, 66) as `0x${string}`
-        const message = BigInt(messageBytes32)
+        // 3. メッセージをエンコーディングする（文字列を直接bytes32に変換）
+        // stringToHexを使用して文字列をhexに変換し、32バイトにパディング
+        const messageHex = stringToHex(feedbackMessage, { size: 32 })
+        const message = BigInt(messageHex)
 
         // 4. ZK Proofを生成する
         toast.loading("Generating zero-knowledge proof...", { id: toastId })
