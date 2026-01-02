@@ -14,7 +14,6 @@
   "scripts": {
     "web-app": "yarn workspace monorepo-ethers-web-app",
     "contracts": "yarn workspace monorepo-ethers-contracts",
-    "aa-gasless-sample": "yarn workspace aa-gasless-sample",
     "dev": "yarn workspaces foreach -A -pi run dev",
     "dev:web-app": "yarn workspace monorepo-ethers-web-app dev",
     "dev:contracts": "yarn workspace monorepo-ethers-contracts dev",
