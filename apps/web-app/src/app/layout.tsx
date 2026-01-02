@@ -3,6 +3,9 @@ import { AppProviders } from "@/providers/app-providers"
 import type { Metadata } from "next"
 import "./globals.css"
 
+// Privy and other client-only providers require client-side rendering
+export const dynamic = 'force-dynamic'
+
 import { Inter } from "next/font/google"
 const inter = Inter({ subsets: ["latin"] })
 
