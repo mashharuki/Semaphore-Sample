@@ -68,7 +68,7 @@ export default function ProofsPage() {
 
         // 4. Biconomyスマートアカウントを初期化
         toast.loading("Initializing smart account...", { id: toastId })
-        await initializeBiconomyAccount()
+        const { nexusClient } = await initializeBiconomyAccount()
 
         // 5. sendFeedbackトランザクションデータをエンコード
         toast.loading("Sending anonymous feedback...", { id: toastId })
@@ -78,10 +78,11 @@ export default function ProofsPage() {
           args: [merkleTreeDepth, merkleTreeRoot, nullifier, message, points]
         })
 
-        // 6. トランザクションを送信
+        // 6. トランザクションを送信（初期化したnexusClientを渡す）
         const txHash = await sendTransaction(
           process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as Address,
-          functionCallData
+          functionCallData,
+          nexusClient
         )
 
         if (txHash) {

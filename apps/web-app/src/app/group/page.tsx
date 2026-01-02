@@ -56,10 +56,11 @@ export default function GroupsPage() {
         args: [_identity.commitment]
       })
 
-      // 3. トランザクションを送信
+      // 3. トランザクションを送信（初期化したnexusClientを渡す）
       const txHash = await sendTransaction(
         process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as Address,
-        functionCallData
+        functionCallData,
+        nexusClient
       )
 
       if (txHash) {

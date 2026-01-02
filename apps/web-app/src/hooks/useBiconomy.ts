@@ -121,9 +121,12 @@ export const useBiconomy = () => {
    * @throws スマートアカウントが初期化されていない場合、またはトランザクション送信に失敗した場合
    */
   const sendTransaction = useCallback(
-    async (to: Address, data: Hex): Promise<string | null> => {
+    async (to: Address, data: Hex, nexusClient?: NexusClient): Promise<string | null> => {
       try {
-        if (!accountState.nexusAccount) {
+        // 引数で渡されたnexusClientを優先、なければ内部状態を使用
+        const clientToUse = nexusClient || accountState.nexusAccount
+
+        if (!clientToUse) {
           throw new Error("Smart account is not initialized. Call initializeBiconomyAccount first.")
         }
 
@@ -131,7 +134,7 @@ export const useBiconomy = () => {
         console.log("Transaction data:", data)
 
         // トランザクションを送信
-        const hash = await accountState.nexusAccount.sendTransaction({
+        const hash = await clientToUse.sendTransaction({
           to,
           data,
           chain: baseSepolia
