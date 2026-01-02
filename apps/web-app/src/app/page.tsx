@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import Auth from "../components/Auth"
 import Stepper from "../components/Stepper"
+import { Spinner } from "@/components/ui/spinner"
 import { useAuth } from "../context/AuthContext"
 import { useLogContext } from "../context/LogContext"
 import { supabase } from "../utils/supabase"
@@ -16,7 +17,7 @@ import { supabase } from "../utils/supabase"
 export default function IdentitiesPage() {
   const router = useRouter()
   const { setLog } = useLogContext()
-  const { user, loading: authLoading, signOut } = useAuth()
+  const { user, ready, logout } = useAuth()
   const [_identity, setIdentity] = useState<Identity>()
   const [fetchingIdentity, setFetchingIdentity] = useState(false)
 
@@ -27,7 +28,7 @@ export default function IdentitiesPage() {
      * @returns
      */
     const fetchCurrentIdentity = async () => {
-      if (authLoading) return
+      if (!ready) return
 
       if (user) {
         setFetchingIdentity(true)
@@ -51,7 +52,7 @@ export default function IdentitiesPage() {
     }
 
     fetchCurrentIdentity()
-  }, [user, authLoading, setLog])
+  }, [user, ready, setLog])
 
   /**
    * createIdentity: 新しいSemaphoreアイデンティティを生成し、Supabaseに保存
@@ -82,8 +83,12 @@ export default function IdentitiesPage() {
     setFetchingIdentity(false)
   }, [user, setLog])
 
-  if (authLoading) {
-    return <div className="loader"></div>
+  if (!ready) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   return (
@@ -91,7 +96,7 @@ export default function IdentitiesPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2>Identities</h2>
         {user && (
-          <button className="button" onClick={signOut} style={{ padding: "5px 10px", fontSize: "14px" }}>
+          <button className="button" onClick={logout} style={{ padding: "5px 10px", fontSize: "14px" }}>
             Logout
           </button>
         )}
@@ -130,7 +135,9 @@ export default function IdentitiesPage() {
           </div>
 
           {fetchingIdentity ? (
-            <div className="loader"></div>
+            <div className="flex items-center justify-center py-8">
+              <Spinner size="md" />
+            </div>
           ) : (
             _identity && (
               <div className="key-wrapper">

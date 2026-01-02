@@ -1,9 +1,10 @@
 import PageContainer from "@/components/PageContainer"
-import { AuthProvider } from "@/context/AuthContext"
-import { LogContextProvider } from "@/context/LogContext"
-import { SemaphoreContextProvider } from "@/context/SemaphoreContext"
+import { AppProviders } from "@/providers/app-providers"
 import type { Metadata } from "next"
 import "./globals.css"
+
+// Privy and other client-only providers require client-side rendering
+export const dynamic = 'force-dynamic'
 
 import { Inter } from "next/font/google"
 const inter = Inter({ subsets: ["latin"] })
@@ -33,8 +34,8 @@ export const metadata: Metadata = {
 
 /**
  * ルートレイアウトコンポーネント
- * @param param0 
- * @returns 
+ * @param param0
+ * @returns
  */
 export default function RootLayout({
   children
@@ -49,13 +50,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet"></link>
       </head>
       <body suppressHydrationWarning className={inter.className}>
-        <AuthProvider>
-          <SemaphoreContextProvider>
-            <LogContextProvider>
-              <PageContainer>{children}</PageContainer>
-            </LogContextProvider>
-          </SemaphoreContextProvider>
-        </AuthProvider>
+        <AppProviders>
+          <PageContainer>{children}</PageContainer>
+        </AppProviders>
       </body>
     </html>
   )

@@ -12,7 +12,8 @@
     "typechain": "hardhat typechain",
     "lint": "eslint . --ext .js,.ts && solhint 'contracts/**/*.sol'",
     "prettier": "prettier -c --plugin=prettier-plugin-solidity .",
-    "prettier:write": "prettier -w --plugin=prettier-plugin-solidity ."
+    "prettier:write": "prettier -w --plugin=prettier-plugin-solidity .",
+    "resetContractAddressesJson": "hardhat resetContractAddressesJson"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",

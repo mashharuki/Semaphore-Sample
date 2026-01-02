@@ -1,15 +1,19 @@
 "use client"
 import Stepper from "@/components/Stepper"
+import { Spinner } from "@/components/ui/spinner"
 import { useLogContext } from "@/context/LogContext"
 import { useSemaphoreContext } from "@/context/SemaphoreContext"
+import { useBiconomy } from "@/hooks/useBiconomy"
 import useSemaphoreIdentity from "@/hooks/useSemaphoreIdentity"
-import { ethers } from "ethers"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import toast from "react-hot-toast"
+import { type Address, encodeFunctionData, createPublicClient, http } from "viem"
+import { baseSepolia } from "viem/chains"
 import Feedback from "../../../contract-artifacts/Feedback.json"
 
 /**
- * GroupsPageコンポーネント
+ * GroupsPageコンポーネント（Biconomy AA対応）
  * @returns
  */
 export default function GroupsPage() {
@@ -18,6 +22,20 @@ export default function GroupsPage() {
   const { _users, refreshUsers, addUser } = useSemaphoreContext()
   const [_loading, setLoading] = useState(false)
   const { _identity, loading: identityLoading } = useSemaphoreIdentity()
+  const { initializeBiconomyAccount, sendTransaction, isLoading: biconomyLoading } = useBiconomy()
+
+  // ページマウント時に最新のグループメンバーを取得
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        await refreshUsers()
+      } catch (error) {
+        console.error("Error fetching group members:", error)
+      }
+    }
+    
+    fetchInitialData()
+  }, [refreshUsers])
 
   useEffect(() => {
     if (_users.length > 0) {
@@ -28,7 +46,7 @@ export default function GroupsPage() {
   const users = useMemo(() => [..._users].reverse(), [_users])
 
   /**
-   * グループに参加する
+   * グループに参加する（Biconomy AA経由）
    */
   const joinGroup = useCallback(async () => {
     if (!_identity) {
@@ -36,71 +54,108 @@ export default function GroupsPage() {
     }
 
     setLoading(true)
-    setLog(`Joining the Feedback group...`)
+    setLog(`Joining the Feedback group via Biconomy AA...`)
 
-    let joinedGroup: boolean = false
+    const toastId = toast.loading("Initializing smart account...")
 
-    if (process.env.NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK) {
-      const response = await fetch(process.env.NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          abi: Feedback.abi,
-          address: process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as string,
-          functionName: "joinGroup",
-          functionParameters: [_identity.commitment.toString()]
+    try {
+      // 1. Biconomyスマートアカウントを初期化
+      const { nexusClient } = await initializeBiconomyAccount()
+      toast.loading("Sending transaction...", { id: toastId })
+
+      // 2. joinGroupトランザクションデータをエンコード
+      const functionCallData = encodeFunctionData({
+        abi: Feedback.abi,
+        functionName: "joinGroup",
+        args: [_identity.commitment]
+      })
+
+      // 3. トランザクションを送信（joinGroupは低めのガス制限で十分）
+      const txHash = await sendTransaction(
+        process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as Address,
+        functionCallData,
+        nexusClient,
+        {
+          callGasLimit: BigInt(300000),      // joinGroupは300K
+          verificationGasLimit: BigInt(200000) // 検証は200K
+        }
+      )
+
+      if (txHash) {
+        // トランザクションがブロックに含まれるまで待機
+        toast.loading("Waiting for transaction confirmation...", { id: toastId })
+        
+        console.log("Transaction hash:", txHash)
+        console.log("User commitment:", _identity.commitment.toString())
+        
+        // publicClientを作成してトランザクションレシートを確認
+        const publicClient = createPublicClient({
+          chain: baseSepolia,
+          transport: http()
         })
-      })
-
-      if (response.status === 200) {
-        joinedGroup = true
+        
+        try {
+          // トランザクションレシートを取得（最大60秒待機）
+          console.log("Waiting for transaction receipt...")
+          const receipt = await publicClient.waitForTransactionReceipt({
+            hash: txHash as `0x${string}`,
+            timeout: 60_000
+          })
+          
+          console.log("Transaction receipt:", receipt)
+          console.log("Transaction status:", receipt.status === "success" ? "SUCCESS" : "FAILED")
+          
+          if (receipt.status === "reverted") {
+            throw new Error("Transaction was reverted on-chain")
+          }
+          
+          // トランザクション成功後、グループメンバーを確認
+          toast.loading("Verifying group membership...", { id: toastId })
+          
+          let confirmed = false
+          let attempts = 0
+          const maxAttempts = 6
+          
+          while (!confirmed && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 3000))
+            const latestMembers = await refreshUsers()
+            
+            if (latestMembers.includes(_identity.commitment.toString())) {
+              confirmed = true
+              console.log("User successfully added to group!")
+            } else {
+              attempts++
+              console.log(`Attempt ${attempts}/${maxAttempts}: User not yet in group, retrying...`)
+            }
+          }
+          
+          if (!confirmed) {
+            console.warn("Transaction succeeded but user not found in group yet. This may be due to indexing delay.")
+            toast("Transaction succeeded! If you don't see yourself in the group, please refresh the page.", { 
+              id: toastId, 
+              duration: 8000,
+              icon: "⚠️"
+            })
+          } else {
+            setLog(`You have joined the Feedback group! 🎉 Transaction: ${txHash}`)
+            toast.success("Successfully joined the group!", { id: toastId })
+          }
+        } catch (error) {
+          console.error("Error waiting for transaction receipt:", error)
+          throw new Error(`Transaction may have failed. Please check on Base Sepolia explorer: https://sepolia.basescan.org/tx/${txHash}`)
+        }
+      } else {
+        throw new Error("Transaction hash not returned")
       }
-    } else if (
-      process.env.NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT &&
-      process.env.NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID &&
-      process.env.GELATO_RELAYER_API_KEY
-    ) {
-      const iface = new ethers.Interface(Feedback.abi)
-      const request = {
-        chainId: process.env.NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID,
-        target: process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS,
-        data: iface.encodeFunctionData("joinGroup", [_identity.commitment.toString()]),
-        sponsorApiKey: process.env.GELATO_RELAYER_API_KEY
-      }
-      const response = await fetch(process.env.NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request)
-      })
-
-      if (response.status === 201) {
-        joinedGroup = true
-      }
-    } else {
-      // API経由でグループに参加する
-      const response = await fetch("api/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identityCommitment: _identity.commitment.toString()
-        })
-      })
-
-      if (response.status === 200) {
-        joinedGroup = true
-      }
+    } catch (error) {
+      console.error("Error joining group:", error)
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+      setLog(`Error joining group: ${errorMessage}`)
+      toast.error(`Failed to join group: ${errorMessage}`, { id: toastId })
+    } finally {
+      setLoading(false)
     }
-
-    if (joinedGroup) {
-      addUser(_identity.commitment.toString())
-
-      setLog(`You have joined the Feedback group event 🎉 Share your feedback anonymously!`)
-    } else {
-      setLog("Some error occurred, please try again!")
-    }
-
-    setLoading(false)
-  }, [_identity, addUser, setLoading, setLog])
+  }, [_identity, setLog, refreshUsers, initializeBiconomyAccount, sendTransaction])
 
   const userHasJoined = useMemo(
     () => _identity !== undefined && _users.includes(_identity.commitment.toString()),
@@ -108,7 +163,11 @@ export default function GroupsPage() {
   )
 
   if (identityLoading) {
-    return <div className="loader"></div>
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   return (
@@ -148,6 +207,15 @@ export default function GroupsPage() {
         </button>
       </div>
 
+      {/* 参加状態の表示 */}
+      {_identity && userHasJoined && (
+        <div style={{ padding: "10px", marginBottom: "10px", backgroundColor: "#2d3748", borderRadius: "8px", border: "1px solid #4a5568" }}>
+          <p style={{ margin: 0, color: "#48bb78" }}>
+            ✓ You are already a member of this group
+          </p>
+        </div>
+      )}
+
       {_users.length > 0 && (
         <div className="users-wrapper">
           {users.map((user, i) => (
@@ -159,9 +227,14 @@ export default function GroupsPage() {
       )}
 
       <div className="join-group-button">
-        <button className="button" onClick={joinGroup} disabled={_loading || !_identity || userHasJoined} type="button">
+        <button
+          className="button"
+          onClick={joinGroup}
+          disabled={_loading || biconomyLoading || !_identity || userHasJoined}
+          type="button"
+        >
           <span>Join group</span>
-          {_loading && <div className="loader"></div>}
+          {(_loading || biconomyLoading) && <Spinner size="sm" className="ml-2" />}
         </button>
       </div>
 

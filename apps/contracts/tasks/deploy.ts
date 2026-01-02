@@ -1,4 +1,5 @@
 import { task, types } from "hardhat/config"
+import { writeContractAddress } from "../helper/contractJsonHelper"
 
 /**
  * Feedbackコントラクトをデプロイするタスク
@@ -6,7 +7,7 @@ import { task, types } from "hardhat/config"
 task("deploy", "Deploy a Feedback contract")
   .addOptionalParam("semaphore", "Semaphore contract address", undefined, types.string)
   .addOptionalParam("logs", "Print the logs", true, types.boolean)
-  .setAction(async ({ logs, semaphore: semaphoreAddress }, { ethers, run }) => {
+  .setAction(async ({ logs, semaphore: semaphoreAddress }, { ethers, network, run }) => {
     if (!semaphoreAddress) {
       const { semaphore } = await run("deploy:semaphore", {
         logs
@@ -23,6 +24,14 @@ task("deploy", "Deploy a Feedback contract")
     if (logs) {
       console.info(`Feedback contract has been deployed to: ${await feedbackContract.getAddress()}`)
     }
+
+    // write Contract Address
+    writeContractAddress({
+      group: "contracts",
+      name: "Feedback",
+      value: feedbackContract.target as any,
+      network: network.name
+    })
 
     return feedbackContract
   })

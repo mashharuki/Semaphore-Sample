@@ -3,22 +3,41 @@
 import Stepper from "@/components/Stepper"
 import { useLogContext } from "@/context/LogContext"
 import { useSemaphoreContext } from "@/context/SemaphoreContext"
+import { useBiconomy } from "@/hooks/useBiconomy"
 import useSemaphoreIdentity from "@/hooks/useSemaphoreIdentity"
 import { generateProof, Group } from "@semaphore-protocol/core"
-import { encodeBytes32String, ethers } from "ethers"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import toast from "react-hot-toast"
+import { type Address, encodeFunctionData, stringToHex } from "viem"
 import Feedback from "../../../contract-artifacts/Feedback.json"
 
 /**
- * ProofPageコンポーネント
+ * ProofPageコンポーネント（Biconomy AA対応）
  */
 export default function ProofsPage() {
   const router = useRouter()
   const { setLog } = useLogContext()
-  const { _users, _feedback, refreshFeedback, addFeedback } = useSemaphoreContext()
+  const { _users, _feedback, refreshUsers, refreshFeedback, addFeedback } = useSemaphoreContext()
   const [_loading, setLoading] = useState(false)
   const { _identity, loading: identityLoading } = useSemaphoreIdentity()
+  const { initializeBiconomyAccount, sendTransaction, isLoading: biconomyLoading } = useBiconomy()
+
+  // ページマウント時に最新のグループメンバーとフィードバックを取得
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        await Promise.all([
+          refreshUsers(),
+          refreshFeedback()
+        ])
+      } catch (error) {
+        console.error("Error fetching initial data:", error)
+      }
+    }
+    
+    fetchInitialData()
+  }, [refreshUsers, refreshFeedback])
 
   useEffect(() => {
     if (_feedback.length > 0) {
@@ -28,106 +47,92 @@ export default function ProofsPage() {
 
   const feedback = useMemo(() => [..._feedback].reverse(), [_feedback])
 
+  /**
+   * フィードバックを送信する（Biconomy AA経由）
+   */
   const sendFeedback = useCallback(async () => {
     if (!_identity) {
       return
     }
 
-    const feedback = prompt("Please enter your feedback:")
+    const feedbackMessage = prompt("Please enter your feedback:")
 
-    if (feedback && _users) {
+    if (feedbackMessage && _users) {
       setLoading(true)
+      setLog(`Generating zero-knowledge proof...`)
 
-      setLog(`Posting your anonymous feedback...`)
+      const toastId = toast.loading("Refreshing group members...")
 
       try {
-        // Groupインスタンスを作成
-        const group = new Group(_users)
-        // メッセージをエンコーディングする
-        const message = encodeBytes32String(feedback)
-        // ZK Proofを生成する
+        // 1. 最新のグループメンバーリストを取得
+        const latestUsers = await refreshUsers()
+        toast.loading("Generating proof...", { id: toastId })
+
+        // デバッグ: ユーザーのcommitmentとグループメンバーを確認
+        console.log("User's identity commitment:", _identity.commitment.toString())
+        console.log("Latest group members:", latestUsers)
+        console.log("Is user in group?", latestUsers.includes(_identity.commitment.toString()))
+
+        // ユーザーがグループに参加しているか確認
+        if (!latestUsers.includes(_identity.commitment.toString())) {
+          throw new Error("You must join the group before sending feedback. Please go to the Groups page and join first.")
+        }
+
+        // 2. Groupインスタンスを作成（文字列をBigIntに変換）
+        // Semaphore の Group クラスは BigInt の配列を期待します
+        const group = new Group(latestUsers.map(member => BigInt(member)))
+
+        // 3. メッセージをエンコーディングする（文字列を直接bytes32に変換）
+        // stringToHexを使用して文字列をhexに変換し、32バイトにパディング
+        const messageHex = stringToHex(feedbackMessage, { size: 32 })
+        const message = BigInt(messageHex)
+
+        // 4. ZK Proofを生成する
+        toast.loading("Generating zero-knowledge proof...", { id: toastId })
         const { points, merkleTreeDepth, merkleTreeRoot, nullifier } = await generateProof(
           _identity,
           group,
           message,
           process.env.NEXT_PUBLIC_GROUP_ID as string
         )
-        // フィードバックを送信する
-        let feedbackSent: boolean = false
-        const params = [merkleTreeDepth, merkleTreeRoot, nullifier, message, points]
 
-        // OpenZeppelin Autotaskを使用する場合は以下を使用する
-        if (process.env.NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK) {
-          const response = await fetch(process.env.NEXT_PUBLIC_OPENZEPPELIN_AUTOTASK_WEBHOOK, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              abi: Feedback.abi,
-              address: process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS,
-              functionName: "sendFeedback",
-              functionParameters: params
-            })
-          })
+        // 5. Biconomyスマートアカウントを初期化
+        toast.loading("Initializing smart account...", { id: toastId })
+        const { nexusClient } = await initializeBiconomyAccount()
 
-          if (response.status === 200) {
-            feedbackSent = true
-          }
-        } else if (
-          process.env.NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT &&
-          process.env.NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID &&
-          process.env.GELATO_RELAYER_API_KEY
-        ) {
-          const iface = new ethers.Interface(Feedback.abi)
-          const request = {
-            chainId: process.env.NEXT_PUBLIC_GELATO_RELAYER_CHAIN_ID,
-            target: process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS,
-            data: iface.encodeFunctionData("sendFeedback", params),
-            sponsorApiKey: process.env.GELATO_RELAYER_API_KEY
-          }
-          const response = await fetch(process.env.NEXT_PUBLIC_GELATO_RELAYER_ENDPOINT, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(request)
-          })
+        // 6. sendFeedbackトランザクションデータをエンコード
+        toast.loading("Sending anonymous feedback...", { id: toastId })
+        const functionCallData = encodeFunctionData({
+          abi: Feedback.abi,
+          functionName: "sendFeedback",
+          args: [merkleTreeDepth, merkleTreeRoot, nullifier, message, points]
+        })
 
-          if (response.status === 201) {
-            feedbackSent = true
-          }
+        // 7. トランザクションを送信（初期化したnexusClientを渡す）
+        const txHash = await sendTransaction(
+          process.env.NEXT_PUBLIC_FEEDBACK_CONTRACT_ADDRESS as Address,
+          functionCallData,
+          nexusClient
+        )
+
+        if (txHash) {
+          // フィードバック送信成功
+          addFeedback(feedbackMessage)
+          setLog(`Your anonymous feedback has been posted! 🎉 Transaction: ${txHash}`)
+          toast.success("Feedback posted successfully!", { id: toastId })
         } else {
-          // feedbackを送信するAPIを実行
-          const response = await fetch("api/feedback", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              feedback: message,
-              merkleTreeDepth,
-              merkleTreeRoot,
-              nullifier,
-              points
-            })
-          })
-
-          if (response.status === 200) {
-            feedbackSent = true
-          }
-        }
-
-        if (feedbackSent) {
-          addFeedback(feedback)
-
-          setLog(`Your feedback has been posted 🎉`)
-        } else {
-          setLog("Some error occurred, please try again!")
+          throw new Error("Transaction hash not returned")
         }
       } catch (error) {
-        console.error(error)
-
-        setLog("Some error occurred, please try again!")
+        console.error("Error sending feedback:", error)
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+        setLog(`Error sending feedback: ${errorMessage}`)
+        toast.error(`Failed to send feedback: ${errorMessage}`, { id: toastId })
       } finally {
         setLoading(false)
       }
     }
-  }, [_identity, _users, addFeedback, setLoading, setLog])
+  }, [_identity, _users, addFeedback, setLog, refreshUsers, initializeBiconomyAccount, sendTransaction])
 
   if (identityLoading) {
     return <div className="loader"></div>
@@ -163,8 +168,8 @@ export default function ProofsPage() {
         </button>
       </div>
 
-      {feedback.length > 0 && (
-        <div className="feedback-wrapper">
+      {_feedback.length > 0 && (
+        <div className="users-wrapper">
           {feedback.map((f, i) => (
             <div key={i}>
               <p className="box box-text">{f}</p>
@@ -173,14 +178,19 @@ export default function ProofsPage() {
         </div>
       )}
 
-      <div className="send-feedback-button">
-        <button className="button" onClick={sendFeedback} disabled={_loading}>
+      <div>
+        <button
+          className="button"
+          onClick={sendFeedback}
+          disabled={_loading || biconomyLoading || !_identity}
+          type="button"
+        >
           <span>Send Feedback</span>
-          {_loading && <div className="loader"></div>}
+          {(_loading || biconomyLoading) && <div className="loader"></div>}
         </button>
       </div>
 
-      <div className="divider"></div>
+      <div className="divider" />
 
       <Stepper step={3} onPrevClick={() => router.push("/group")} />
     </>
