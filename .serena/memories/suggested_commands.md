@@ -35,6 +35,11 @@
 - `yarn workspace monorepo-ethers-web-app build`: プロダクションビルドを作成
 - `yarn workspace monorepo-ethers-web-app start`: プロダクションサーバーを起動
 
+**Supabaseマイグレーション**:
+- `cd apps/web-app && supabase db push`: マイグレーションをSupabaseに適用
+- `cd apps/web-app && supabase db reset`: データベースをリセット（開発環境のみ）
+- `cd apps/web-app && supabase migration new <name>`: 新しいマイグレーションファイルを作成
+
 ### apps/aa-gasless-sample
 
 **開発・ビルド**:
