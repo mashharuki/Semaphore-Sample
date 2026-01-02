@@ -52,8 +52,19 @@ export default function ProofsPage() {
         const latestUsers = await refreshUsers()
         toast.loading("Generating proof...", { id: toastId })
 
-        // 2. Groupインスタンスを作成（最新のメンバーリストを使用）
-        const group = new Group(latestUsers)
+        // デバッグ: ユーザーのcommitmentとグループメンバーを確認
+        console.log("User's identity commitment:", _identity.commitment.toString())
+        console.log("Latest group members:", latestUsers)
+        console.log("Is user in group?", latestUsers.includes(_identity.commitment.toString()))
+
+        // ユーザーがグループに参加しているか確認
+        if (!latestUsers.includes(_identity.commitment.toString())) {
+          throw new Error("You must join the group before sending feedback. Please go to the Groups page and join first.")
+        }
+
+        // 2. Groupインスタンスを作成（文字列をBigIntに変換）
+        // Semaphore の Group クラスは BigInt の配列を期待します
+        const group = new Group(latestUsers.map(member => BigInt(member)))
 
         // 3. メッセージをエンコーディングする（viemを使用）
         const messageEncoded = encodeAbiParameters(parseAbiParameters("string"), [feedbackMessage])

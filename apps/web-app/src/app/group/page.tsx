@@ -64,8 +64,34 @@ export default function GroupsPage() {
       )
 
       if (txHash) {
-        // グループに参加成功
-        addUser(_identity.commitment.toString())
+        // トランザクションがブロックに含まれるまで待機
+        toast.loading("Waiting for transaction confirmation...", { id: toastId })
+        
+        console.log("Transaction hash:", txHash)
+        console.log("User commitment:", _identity.commitment.toString())
+        
+        // トランザクションがブロックに含まれるのを待つ（最大30秒）
+        let confirmed = false
+        let attempts = 0
+        const maxAttempts = 6 // 30秒（5秒 x 6回）
+        
+        while (!confirmed && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 5000))
+          const latestMembers = await refreshUsers()
+          
+          if (latestMembers.includes(_identity.commitment.toString())) {
+            confirmed = true
+            console.log("User successfully added to group!")
+          } else {
+            attempts++
+            console.log(`Attempt ${attempts}/${maxAttempts}: User not yet in group, retrying...`)
+          }
+        }
+        
+        if (!confirmed) {
+          console.warn("Transaction may still be pending. Please refresh the page if you don't see yourself in the group.")
+        }
+        
         setLog(`You have joined the Feedback group! 🎉 Transaction: ${txHash}`)
         toast.success("Successfully joined the group!", { id: toastId })
       } else {
@@ -79,7 +105,7 @@ export default function GroupsPage() {
     } finally {
       setLoading(false)
     }
-  }, [_identity, addUser, setLog, initializeBiconomyAccount, sendTransaction])
+  }, [_identity, setLog, refreshUsers, initializeBiconomyAccount, sendTransaction])
 
   const userHasJoined = useMemo(
     () => _identity !== undefined && _users.includes(_identity.commitment.toString()),
